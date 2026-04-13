@@ -1,28 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import plusIcon from "./assets/plusicon.png";
 
 export default function App() {
   const [cards, setCards] = useState([]);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [rotation, setRotation] = useState(0);
+
+  const quantity = cards.length + 1;
 
   const newCard = () => {
-    setCards((prevCards) => [...prevCards, prevCards.length + 1]);
+    setCards((prevCards) => [
+      ...prevCards,
+      { id: prevCards.length, title: "New Category" },
+    ]);
+  };
+
+  useEffect(() => {
+    if (selectedCard !== null) return;
+
+    const interval = setInterval(() => {
+      setRotation((prev) => prev + 0.3);
+    }, 16);
+
+    return () => clearInterval(interval);
+  }, [selectedCard]);
+
+  const handleSelectCard = (position, id) => {
+    const angle = (position - 1) * (360 / quantity);
+    setRotation(-angle);
+    setSelectedCard(id);
+  };
+
+  const closeCard = () => {
+    setSelectedCard(null);
   };
 
   return (
     <div className="banner">
-      <div className="slider" style={{ "--quantity": cards.length + 1 }}>
+      <div
+        className={`slider ${selectedCard !== null ? "paused" : ""}`}
+        style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
+      >
         <div className="card" onClick={newCard} style={{ "--position": 1 }}>
           <img src={plusIcon} alt="Add card" />
         </div>
-        {cards.map((_, index) => (
-          <div
-            key={index}
-            className="card"
-            style={{ "--position": index + 2 }}
-          ></div>
-        ))}
+        {cards.map((card, index) => {
+          return (
+            <div
+              key={card.id}
+              className={`card ${selectedCard === card.id ? "active" : ""}`}
+              style={{ "--position": index + 2 }}
+              onClick={() => handleSelectCard(index + 2, card.id)}
+            >
+              {card.title}
+
+              {selectedCard === card.id && (
+                <span
+                  className="closeButton"
+                  onClick={(e) => {
+                    e.stopPropagation(); // IMPORTANT
+                    closeCard();
+                  }}
+                >
+                  ✕
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* {selectedCard !== null && (
+        <p className="closeButton" onClick={closeCard}>
+          X
+        </p>
+      )} */}
     </div>
   );
 }
