@@ -75,11 +75,11 @@
 
 .banner .slider .card .closeButton {
   position: absolute;
-  top: 3.5%;
-  right: 6%;
+  top: 1.1vw;
+  right: 1.1vw;
 
-  width: 6%;
-  aspect-ratio: 1/1;
+  width: 1.5vw;
+  height: 1.5vw;
 
   display: flex;
   align-items: center;
