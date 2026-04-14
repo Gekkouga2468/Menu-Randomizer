@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import plusIcon from "./assets/plusicon.png";
 
@@ -9,6 +9,12 @@ export default function App() {
   const [rotation, setRotation] = useState(0);
 
   const quantity = cards.length + 1;
+
+  const sliderRef = useRef(null);
+  const isDragging = useRef(false);
+  const lastX = useRef(0);
+  const lastTime = useRef(0);
+  const velocity = useRef(0);
 
   const newCard = () => {
     if (cards.length >= MAX) {
@@ -25,21 +31,75 @@ export default function App() {
   useEffect(() => {
     if (selectedCard !== null) return;
 
-    const interval = setInterval(() => {
-      setRotation((prev) => prev + 0.3);
-    }, 16);
+    let animationFrameId;
 
-    return () => clearInterval(interval);
+    const animate = () => {
+      setRotation((prev) => {
+        const next = prev + velocity.current + 0.15;
+        velocity.current *= 0.95;
+
+        if (Math.abs(velocity.current) < 0.001) {
+          velocity.current = 0;
+        }
+
+        return next;
+      });
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
   }, [selectedCard]);
 
   const handleSelectCard = (position, id) => {
     const angle = (position - 1) * (360 / quantity);
     setRotation(-angle);
     setSelectedCard(id);
+    velocity.current = 0;
   };
 
   const closeCard = () => {
     setSelectedCard(null);
+  };
+
+  const handlePointerDown = (e) => {
+    if (selectedCard !== null) return;
+
+    isDragging.current = true;
+    lastX.current = e.clientX;
+    lastTime.current = performance.now();
+    velocity.current = 0;
+
+    try {
+      if (e.currentTarget.hasPointerCapture?.(e.pointerId) === false) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+    } catch (err) {
+      // fail silently (prevents crash)
+    }
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging.current || selectedCard !== null) return;
+
+    const currentX = e.clientX;
+    const currentTime = performance.now();
+    const deltaX = currentX - lastX.current;
+    const deltaTime = currentTime - lastTime.current || 1;
+
+    const dragRotation = deltaX * 0.35;
+    setRotation((prev) => prev + dragRotation);
+
+    velocity.current = (deltaX / deltaTime) * 2.2;
+
+    lastX.current = currentX;
+    lastTime.current = currentTime;
+  };
+
+  const handlePointerUp = () => {
+    isDragging.current = false;
   };
 
   return (
@@ -47,6 +107,11 @@ export default function App() {
       <div
         className={`slider ${selectedCard !== null ? "paused" : ""}`}
         style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
       >
         <div
           className="card defaultCard"

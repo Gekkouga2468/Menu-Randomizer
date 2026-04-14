@@ -15,11 +15,18 @@
   width: 15vw;
   height: 25vw;
   left: 50%;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
 
   transform-style: preserve-3d;
   transform: translateX(-50%) perspective(calc(90vw + var(--quantity) * 10vw))
     rotateY(var(--rotation));
-  transition: transform 4.5s ease;
+  transition: transform 0.8s ease;
+}
+
+.banner .slider:active {
+  cursor: grabbing;
 }
 
 .banner .slider .card {
@@ -141,6 +148,27 @@ h1{
       )
       translateZ(calc(var(--quantity) * 8vw + 10vw)) scale(1.1);
   }
+
+  .banner .slider .card .closeButton {
+  position: absolute;
+  top: 3vw;
+  right: 3vw;
+
+  width: 4vw;
+  height: 4vw;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 3vw;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+
+  z-index: 20;
+}
 
   h1{
     font-size: 3.5vw;
