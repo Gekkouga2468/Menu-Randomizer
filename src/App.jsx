@@ -3,6 +3,7 @@ import "./App.css";
 import plusIcon from "./assets/plusicon.png";
 
 export default function App() {
+  const MAX = 10;
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [rotation, setRotation] = useState(0);
@@ -10,6 +11,11 @@ export default function App() {
   const quantity = cards.length + 1;
 
   const newCard = () => {
+    if (cards.length >= MAX) {
+      alert("Maximum number of category reached");
+      return;
+    }
+
     setCards((prevCards) => [
       ...prevCards,
       { id: prevCards.length, title: "New Category" },

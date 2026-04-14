@@ -85,7 +85,7 @@
   align-items: center;
   justify-content: center;
 
-  font-size: 16px;
+  font-size: 1vw;
   font-weight: bold;
   background: rgba(0, 0, 0, 0.6);
   color: white;
@@ -98,4 +98,36 @@
   cursor: pointer;
   transform: scale(1.2);
   background: red;
+}
+
+@media (orientation: portrait) {
+  .banner .slider {
+    width: 45vw;
+    height: 90vw;
+  }
+
+  .banner .slider .card {
+    transform: rotateY(
+        calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
+      )
+      translateZ(calc(var(--quantity) * 8vw + 10vw));
+  }
+
+  .banner .slider .card.active {
+    transform: rotateY(
+        calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
+      )
+      translateZ(calc(var(--quantity) * 8vw + 10vw)) scale(1.1);
+  }
+
+  .banner .slider .card .closeButton {
+    position: absolute;
+    top: 4vw;
+    right: 4vw;
+
+    width: 4vw;
+    height: 4vw;
+
+    font-size: 3vw;
+  }
 }
