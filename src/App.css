@@ -19,7 +19,7 @@
   transform-style: preserve-3d;
   transform: translateX(-50%) perspective(calc(90vw + var(--quantity) * 10vw))
     rotateY(var(--rotation));
-  transition: transform 0.6s ease;
+  transition: transform 4.5s ease;
 }
 
 .banner .slider .card {
@@ -114,10 +114,18 @@
   background: red;
 }
 
+h1{
+  font-size: 1.5vw;
+}
+
+.banner .slider .card:hover{
+  cursor: pointer;
+}
+
 @media (orientation: portrait) {
   .banner .slider {
     width: 45vw;
-    height: 90vw;
+    height: 75vw;
   }
 
   .banner .slider .card {
@@ -133,4 +141,9 @@
       )
       translateZ(calc(var(--quantity) * 8vw + 10vw)) scale(1.1);
   }
+
+  h1{
+    font-size: 3.5vw;
+  }
 }
+
