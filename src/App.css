@@ -1,3 +1,10 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .banner {
   width: 100%;
   height: 100vh;
@@ -10,11 +17,20 @@
   justify-content: center;
 }
 
+.banner .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 5;
+}
+
 .banner .slider {
   position: absolute;
   width: 15vw;
   height: 25vw;
   left: 50%;
+  z-index: 10;
+
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -37,6 +53,7 @@
   height: 100%;
   background-color: rgb(241, 241, 241);
   transform-style: preserve-3d;
+  z-index: 1;
 
   text-align: top;
   /* backface-visibility: hidden; */
@@ -46,16 +63,9 @@
     translateZ(calc(var(--quantity) * 2vw + 10vw));
 }
 
-.banner .slider.paused {
+/* .banner .slider.paused {
   animation-play-state: paused;
-}
-
-.banner .slider .card.active {
-  transform: rotateY(
-      calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
-    )
-    translateZ(calc(var(--quantity) * 2vw + 10vw)) scale(1.5);
-}
+} */
 
 .banner .slider .card::before {
   content: "";
@@ -76,6 +86,20 @@
   pointer-events: none;
 }
 
+.banner .slider .card.active {
+  z-index: 20;
+  transform: rotateY(
+      calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
+    )
+    translateZ(calc(var(--quantity) * 2vw + 10vw)) scale(1.5);
+}
+
+.banner .slider .card.collapsed,
+.banner .slider .card.defaultCard.collapsed {
+  pointer-events: none;
+  transform: scale(0);
+}
+
 .banner .slider .card.defaultCard {
   display: flex;
   justify-content: center;
@@ -94,40 +118,14 @@
   cursor: pointer;
 }
 
-.banner .slider .card .closeButton {
-  position: absolute;
-  top: 1.3vw;
-  right: 1.3vw;
-
-  width: 1vw;
-  height: 1vw;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 1vw;
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border-radius: 50%;
-
-  z-index: 20;
-}
-
-.banner .slider .card .closeButton:hover {
+.banner .slider .card:hover{
   cursor: pointer;
-  transform: scale(1.2);
-  background: red;
 }
 
 h1{
   font-size: 1.5vw;
 }
 
-.banner .slider .card:hover{
-  cursor: pointer;
-}
 
 @media (orientation: portrait) {
   .banner .slider {
@@ -148,27 +146,6 @@ h1{
       )
       translateZ(calc(var(--quantity) * 8vw + 10vw)) scale(1.1);
   }
-
-  .banner .slider .card .closeButton {
-  position: absolute;
-  top: 3vw;
-  right: 3vw;
-
-  width: 4vw;
-  height: 4vw;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 3vw;
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border-radius: 50%;
-
-  z-index: 20;
-}
 
   h1{
     font-size: 3.5vw;

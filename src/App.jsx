@@ -10,7 +10,6 @@ export default function App() {
 
   const quantity = cards.length + 1;
 
-  const sliderRef = useRef(null);
   const isDragging = useRef(false);
   const lastX = useRef(0);
   const lastTime = useRef(0);
@@ -71,14 +70,6 @@ export default function App() {
     lastX.current = e.clientX;
     lastTime.current = performance.now();
     velocity.current = 0;
-
-    try {
-      if (e.currentTarget.hasPointerCapture?.(e.pointerId) === false) {
-        e.currentTarget.setPointerCapture(e.pointerId);
-      }
-    } catch (err) {
-      // fail silently (prevents crash)
-    }
   };
 
   const handlePointerMove = (e) => {
@@ -104,6 +95,7 @@ export default function App() {
 
   return (
     <div className="banner">
+      {selectedCard !== null && <div className="overlay" onClick={closeCard} />}
       <div
         className={`slider ${selectedCard !== null ? "paused" : ""}`}
         style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
@@ -114,35 +106,33 @@ export default function App() {
         onPointerLeave={handlePointerUp}
       >
         <div
-          className="card defaultCard"
-          onClick={newCard}
+          className={`card defaultCard  ${
+            selectedCard !== null ? "collapsed" : ""
+          }`}
+          onClick={selectedCard === null ? newCard : undefined}
           style={{ "--position": 1 }}
         >
           <img src={plusIcon} alt="Add card" />
         </div>
         {cards.map((card, index) => {
+          const isActive = selectedCard === card.id;
+
           return (
             <div
               key={card.id}
-              className={`card ${selectedCard === card.id ? "active" : ""}`}
+              className={`card ${isActive ? "active" : ""} ${
+                selectedCard !== null && !isActive ? "collapsed" : ""
+              }`}
               style={{ "--position": index + 2 }}
-              onClick={() => handleSelectCard(index + 2, card.id)}
+              onClick={() => {
+                if (selectedCard === null) {
+                  handleSelectCard(index + 2, card.id);
+                }
+              }}
             >
               <h1>
                 {card.title} {card.id + 1}
               </h1>
-
-              {selectedCard === card.id && (
-                <span
-                  className="closeButton"
-                  onClick={(e) => {
-                    e.stopPropagation(); // IMPORTANT
-                    closeCard();
-                  }}
-                >
-                  ✕
-                </span>
-              )}
             </div>
           );
         })}
