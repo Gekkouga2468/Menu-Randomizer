@@ -48,7 +48,11 @@ export default function App() {
         className={`slider ${selectedCard !== null ? "paused" : ""}`}
         style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
       >
-        <div className="card" onClick={newCard} style={{ "--position": 1 }}>
+        <div
+          className="card defaultCard"
+          onClick={newCard}
+          style={{ "--position": 1 }}
+        >
           <img src={plusIcon} alt="Add card" />
         </div>
         {cards.map((card, index) => {
@@ -59,7 +63,9 @@ export default function App() {
               style={{ "--position": index + 2 }}
               onClick={() => handleSelectCard(index + 2, card.id)}
             >
-              {card.title}
+              <h1>
+                {card.title} {card.id + 1}
+              </h1>
 
               {selectedCard === card.id && (
                 <span
@@ -76,12 +82,6 @@ export default function App() {
           );
         })}
       </div>
-
-      {/* {selectedCard !== null && (
-        <p className="closeButton" onClick={closeCard}>
-          X
-        </p>
-      )} */}
     </div>
   );
 }
