@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import plusIcon from "./assets/plusicon.png";
+import plusIcon1 from "./assets/plusicon1.png";
 
 export default function App() {
   const MAX = 10;
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [rotation, setRotation] = useState(0);
+
+  const [showInput, setShowInput] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const quantity = cards.length + 1;
 
@@ -23,7 +27,7 @@ export default function App() {
 
     setCards((prevCards) => [
       ...prevCards,
-      { id: prevCards.length, title: "New Category" },
+      { id: prevCards.length, title: "New Category", dishes: [] },
     ]);
   };
 
@@ -56,11 +60,15 @@ export default function App() {
     const angle = (position - 1) * (360 / quantity);
     setRotation(-angle);
     setSelectedCard(id);
+    setShowInput(false);
+    setInputValue("");
     velocity.current = 0;
   };
 
   const closeCard = () => {
     setSelectedCard(null);
+    setShowInput(false);
+    setInputValue("");
   };
 
   const handlePointerDown = (e) => {
@@ -93,9 +101,46 @@ export default function App() {
     isDragging.current = false;
   };
 
+  const handleOpenInput = (e) => {
+    e.stopPropagation();
+    setShowInput(true);
+  };
+
+  const handleDone = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed || selectedCard === null) return;
+
+    setCards((prevCards) =>
+      prevCards.map((card) => {
+        if (card.id !== selectedCard) return card;
+
+        return {
+          ...card,
+          dishes: [
+            ...card.dishes,
+            {
+              id: Date.now(),
+              name: trimmed,
+            },
+          ],
+        };
+      }),
+    );
+
+    setInputValue("");
+    setShowInput(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleDone();
+    }
+  };
+
   return (
     <div className="banner">
       {selectedCard !== null && <div className="overlay" onClick={closeCard} />}
+
       <div
         className={`slider ${selectedCard !== null ? "paused" : ""}`}
         style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
@@ -106,7 +151,7 @@ export default function App() {
         onPointerLeave={handlePointerUp}
       >
         <div
-          className={`card defaultCard  ${
+          className={`card defaultCard ${
             selectedCard !== null ? "collapsed" : ""
           }`}
           onClick={selectedCard === null ? newCard : undefined}
@@ -114,6 +159,7 @@ export default function App() {
         >
           <img src={plusIcon} alt="Add card" />
         </div>
+
         {cards.map((card, index) => {
           const isActive = selectedCard === card.id;
 
@@ -133,6 +179,44 @@ export default function App() {
               <h1>
                 {card.title} {card.id + 1}
               </h1>
+
+              {card.dishes.length > 0 && (
+                <ul
+                  className={`dishList ${isActive ? "activeList" : "previewList"}`}
+                >
+                  {card.dishes.map((dish) => (
+                    <li key={dish.id}>{dish.name}</li>
+                  ))}
+                </ul>
+              )}
+
+              {isActive && (
+                <>
+                  <img
+                    className="add"
+                    src={plusIcon1}
+                    alt="Open input"
+                    onClick={handleOpenInput}
+                  />
+
+                  {showInput && (
+                    <div
+                      className="inputPanel"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="text"
+                        placeholder="Type here..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                      />
+                      <button onClick={handleDone}>Done</button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           );
         })}

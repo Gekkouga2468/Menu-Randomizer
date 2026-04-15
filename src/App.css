@@ -55,6 +55,8 @@ html, body {
   transform-style: preserve-3d;
   z-index: 1;
 
+  /* overflow: hidden; */
+
   text-align: top;
   /* backface-visibility: hidden; */
   transform: rotateY(
@@ -74,24 +76,22 @@ html, body {
   border: 3px solid rgb(206, 206, 4);
 }
 
-.banner .slider .card::after {
-  content: "";
-  position: absolute;
-  inset: 1vw;
-  background-color: rgb(241, 241, 241);
-  border: 3px solid rgb(206, 206, 4);
-  transform: rotateY(180deg);
-  backface-visibility: hidden;
-  z-index: 5;
-  pointer-events: none;
-}
-
 .banner .slider .card.active {
   z-index: 20;
   transform: rotateY(
       calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
     )
     translateZ(calc(var(--quantity) * 2vw + 10vw)) scale(1.5);
+}
+
+.banner .slider .card.active .add {
+  position: absolute;
+  width: 2.5vw;
+  height: auto;
+  z-index: 30;
+  bottom: 1.5vw;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .banner .slider .card.collapsed,
@@ -126,6 +126,93 @@ h1{
   font-size: 1.5vw;
 }
 
+.banner .slider .card.active .add {
+  position: absolute;
+  left: 50%;
+  bottom: 1.5vw;
+  transform: translateX(-50%);
+  width: 2.5vw;
+  height: auto;
+  z-index: 30;
+  cursor: pointer;
+}
+
+.banner .slider .card .inputPanel {
+  position: absolute;
+  left: 50%;
+  bottom: 4.5vw;
+  transform: translateX(-50%);
+  z-index: 40;
+
+  width: 70%;
+  padding: 0.8vw;
+  border: 2px solid rgb(206, 206, 4);
+  background: white;
+
+  display: flex;
+  gap: 0.6vw;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.banner .slider .card .inputPanel input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6vw 0.8vw;
+  font-size: 1vw;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+.banner .slider .card .inputPanel button {
+  padding: 0.6vw 0.9vw;
+  font-size: 0.95vw;
+  border: none;
+  background: black;
+  color: white;
+  cursor: pointer;
+}
+
+.banner .slider .card::after {
+  content: "";
+  position: absolute;
+  inset: 1vw;
+  background-color: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.banner .slider .card .dishList {
+  position: absolute;
+  top: 4vw;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  margin: 0;
+  padding-left: 1.2em;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.banner .slider .card .dishList li {
+  backface-visibility: hidden;
+  margin: 0.35vw 0;
+  line-height: 1.2;
+}
+
+.banner .slider .card .dishList.previewList li {
+  backface-visibility: hidden;
+  font-size: 0.75vw;
+}
+
+.banner .slider .card .dishList.activeList li {
+  backface-visibility: hidden;
+  font-size: 1vw;
+}
+
 
 @media (orientation: portrait) {
   .banner .slider {
@@ -149,6 +236,28 @@ h1{
 
   h1{
     font-size: 3.5vw;
+  }
+
+  .banner .slider .card.active .add {
+    bottom: 4vw;
+    width: 8vw;
+  }
+
+  .banner .slider .card .inputPanel {
+    bottom: 12vw;
+    width: 78%;
+    padding: 2vw;
+    gap: 1.5vw;
+  }
+
+  .banner .slider .card .inputPanel input {
+    padding: 2vw 2.4vw;
+    font-size: 3.2vw;
+  }
+
+  .banner .slider .card .inputPanel button {
+    padding: 2vw 2.5vw;
+    font-size: 3vw;
   }
 }
 
