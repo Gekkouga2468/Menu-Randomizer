@@ -4,33 +4,66 @@ import plusIcon from "./assets/plusicon.png";
 import plusIcon1 from "./assets/plusicon1.png";
 
 export default function App() {
+  /* =========================
+     Constants
+     ========================= */
   const MAX = 10;
-  const [cards, setCards] = useState([]);
+  const STORAGE_KEY = "carousel-cards";
+
+  /* =========================
+     State
+     ========================= */
+
+  // Load saved cards from localStorage on first render
+  const [cards, setCards] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error("Failed to load cards from localStorage:", error);
+      return [];
+    }
+  });
+
+  // Currently opened card
   const [selectedCard, setSelectedCard] = useState(null);
+
+  // Current carousel rotation
   const [rotation, setRotation] = useState(0);
 
+  // Modal state for adding a dish
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
+  /* =========================
+     Derived values
+     ========================= */
+
+  // +1 because the default add-card tile is part of the carousel
   const quantity = cards.length + 1;
 
+  /* =========================
+     Refs for drag / momentum
+     ========================= */
   const isDragging = useRef(false);
   const lastX = useRef(0);
   const lastTime = useRef(0);
   const velocity = useRef(0);
 
-  const newCard = () => {
-    if (cards.length >= MAX) {
-      alert("Maximum number of category reached");
-      return;
+  /* =========================
+     Effects
+     ========================= */
+
+  // Save cards to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    } catch (error) {
+      console.error("Failed to save cards to localStorage:", error);
     }
+  }, [cards]);
 
-    setCards((prevCards) => [
-      ...prevCards,
-      { id: prevCards.length, title: "New Category", dishes: [] },
-    ]);
-  };
-
+  // Auto-rotate the carousel when no card is selected
   useEffect(() => {
     if (selectedCard !== null) return;
 
@@ -56,8 +89,31 @@ export default function App() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [selectedCard]);
 
+  /* =========================
+     Card actions
+     ========================= */
+
+  // Create a new category card
+  const newCard = () => {
+    if (cards.length >= MAX) {
+      alert("Maximum number of category reached");
+      return;
+    }
+
+    setCards((prevCards) => [
+      ...prevCards,
+      {
+        id: Date.now(),
+        title: "New Category",
+        dishes: [],
+      },
+    ]);
+  };
+
+  // Open a card and rotate it to the front
   const handleSelectCard = (position, id) => {
     const angle = (position - 1) * (360 / quantity);
+
     setRotation(-angle);
     setSelectedCard(id);
     setShowInput(false);
@@ -65,11 +121,16 @@ export default function App() {
     velocity.current = 0;
   };
 
+  // Close the active card and reset modal/input state
   const closeCard = () => {
     setSelectedCard(null);
     setShowInput(false);
     setInputValue("");
   };
+
+  /* =========================
+     Drag interaction
+     ========================= */
 
   const handlePointerDown = (e) => {
     if (selectedCard !== null) return;
@@ -101,11 +162,16 @@ export default function App() {
     isDragging.current = false;
   };
 
+  /* =========================
+     Modal / input actions
+     ========================= */
+
   const handleOpenInput = (e) => {
     e.stopPropagation();
     setShowInput(true);
   };
 
+  // Add a dish to the selected card
   const handleDone = () => {
     const trimmed = inputValue.trim();
     if (!trimmed || selectedCard === null) return;
@@ -137,8 +203,12 @@ export default function App() {
     }
   };
 
+  /* =========================
+     Render
+     ========================= */
   return (
     <div className="banner">
+      {/* Dark background when a card is open */}
       {selectedCard !== null && <div className="overlay" onClick={closeCard} />}
 
       <div
@@ -150,16 +220,18 @@ export default function App() {
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
+        {/* Default tile used to create a new card */}
         <div
           className={`card defaultCard ${
             selectedCard !== null ? "collapsed" : ""
           }`}
-          onClick={selectedCard === null ? newCard : undefined}
           style={{ "--position": 1 }}
+          onClick={selectedCard === null ? newCard : undefined}
         >
           <img src={plusIcon} alt="Add card" />
         </div>
 
+        {/* Category cards */}
         {cards.map((card, index) => {
           const isActive = selectedCard === card.id;
 
@@ -177,13 +249,27 @@ export default function App() {
               }}
             >
               <h1>
-                {card.title} {card.id + 1}
+                {card.title} {index + 1}
               </h1>
 
+              {/* Dish list */}
               {card.dishes.length > 0 && (
                 <ul
                   key={`${card.id}-${isActive}`}
-                  className={`dishList ${isActive ? "activeList" : "previewList"}`}
+                  className={`dishList ${
+                    isActive ? "activeList" : "previewList"
+                  }`}
+                  ref={(el) => {
+                    if (!el) return;
+
+                    const isOverflowing = el.scrollHeight > el.clientHeight;
+
+                    if (isOverflowing) {
+                      el.classList.add("fade");
+                    } else {
+                      el.classList.remove("fade");
+                    }
+                  }}
                 >
                   {card.dishes.map((dish) => (
                     <li key={dish.id}>{dish.name}</li>
@@ -191,6 +277,7 @@ export default function App() {
                 </ul>
               )}
 
+              {/* Active card controls */}
               {isActive && (
                 <>
                   <img
@@ -200,20 +287,40 @@ export default function App() {
                     onClick={handleOpenInput}
                   />
 
+                  {/* Simple modal for adding a dish */}
                   {showInput && (
                     <div
-                      className="inputPanel"
-                      onClick={(e) => e.stopPropagation()}
+                      className="modalBackdrop"
+                      onClick={() => setShowInput(false)}
                     >
-                      <input
-                        type="text"
-                        placeholder="Type here..."
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        autoFocus
-                      />
-                      <button onClick={handleDone}>Done</button>
+                      <div
+                        className="modal"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <h2>Add dish</h2>
+
+                        <input
+                          type="text"
+                          placeholder="Enter dish name"
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          autoFocus
+                        />
+
+                        <div className="modalActions">
+                          <button
+                            className="cancelBtn"
+                            onClick={() => setShowInput(false)}
+                          >
+                            Cancel
+                          </button>
+
+                          <button className="doneBtn" onClick={handleDone}>
+                            Done
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>

@@ -1,3 +1,6 @@
+/* =========================
+   Base page layout
+   ========================= */
 html,
 body {
   width: 100%;
@@ -6,31 +9,37 @@ body {
   padding: 0;
 }
 
+/* Main stage that holds the carousel */
 .banner {
-  width: 100%;
-  height: 100vh;
-  text-align: center;
-  overflow: hidden;
   position: relative;
-
   display: flex;
   align-items: center;
   justify-content: center;
+
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  text-align: center;
 }
 
+/* Dark overlay shown when a card is active */
 .banner .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
   z-index: 5;
+  background: rgba(0, 0, 0, 0.45);
 }
 
+/* =========================
+   Slider / carousel
+   ========================= */
 .banner .slider {
   position: absolute;
-  width: 15vw;
-  height: 25vw;
   left: 50%;
   z-index: 10;
+
+  width: 15vw;
+  height: 25vw;
 
   cursor: grab;
   user-select: none;
@@ -46,30 +55,32 @@ body {
   cursor: grabbing;
 }
 
+/* =========================
+   Cards
+   ========================= */
 .banner .slider .card {
   position: absolute;
-  inset: 0px;
+  inset: 0;
 
   width: 100%;
   height: 100%;
-  background-color: rgb(241, 241, 241);
-  transform-style: preserve-3d;
   z-index: 1;
 
-  /* overflow: hidden; */
-
+  background-color: rgb(241, 241, 241);
+  transform-style: preserve-3d;
   text-align: top;
-  /* backface-visibility: hidden; */
+
   transform: rotateY(
       calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
     )
     translateZ(calc(var(--quantity) * 2vw + 10vw));
 }
 
-/* .banner .slider.paused {
-  animation-play-state: paused;
-} */
+.banner .slider .card:hover {
+  cursor: pointer;
+}
 
+/* Front border */
 .banner .slider .card::before {
   content: "";
   position: absolute;
@@ -77,6 +88,22 @@ body {
   border: 3px solid rgb(206, 206, 4);
 }
 
+/* Back face */
+.banner .slider .card::after {
+  content: "";
+  position: absolute;
+  inset: 1vw;
+  z-index: 5;
+
+  background-color: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+/* Active card pops forward and enlarges */
 .banner .slider .card.active {
   z-index: 20;
   transform: rotateY(
@@ -85,117 +112,72 @@ body {
     translateZ(calc(var(--quantity) * 2vw + 10vw)) scale(1.5);
 }
 
-.banner .slider .card.active .add {
-  position: absolute;
-  width: 2.5vw;
-  height: auto;
-  z-index: 30;
-  bottom: 1.5vw;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
+/* Hide non-active cards when one is open */
 .banner .slider .card.collapsed,
 .banner .slider .card.defaultCard.collapsed {
   pointer-events: none;
   transform: scale(0);
 }
 
+/* =========================
+   Default card with add icon
+   ========================= */
 .banner .slider .card.defaultCard {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
 .banner .slider .card.defaultCard img {
+  position: absolute;
   max-width: calc(100% - 20px);
   max-height: calc(100% - 20px);
-  position: absolute;
   transition: transform 0.2s ease;
 }
 
 .banner .slider .card.defaultCard img:hover {
+  cursor: pointer;
   transform: scale(1.1);
-  cursor: pointer;
 }
 
-.banner .slider .card:hover {
-  cursor: pointer;
-}
-
+/* =========================
+   Card heading
+   ========================= */
 h1 {
   font-size: 1.5vw;
 }
 
+/* =========================
+   Add button inside active card
+   ========================= */
 .banner .slider .card.active .add {
   position: absolute;
   left: 50%;
   bottom: 1.5vw;
-  transform: translateX(-50%);
+  z-index: 30;
+
   width: 2.5vw;
   height: auto;
-  z-index: 30;
-  cursor: pointer;
-}
 
-.banner .slider .card .inputPanel {
-  position: absolute;
-  left: 50%;
-  bottom: 4.5vw;
+  cursor: pointer;
   transform: translateX(-50%);
-  z-index: 40;
-
-  width: 70%;
-  padding: 0.8vw;
-  border: 2px solid rgb(206, 206, 4);
-  background: white;
-
-  display: flex;
-  gap: 0.6vw;
-  align-items: center;
-  box-sizing: border-box;
 }
 
-.banner .slider .card .inputPanel input {
-  flex: 1;
-  min-width: 0;
-  padding: 0.6vw 0.8vw;
-  font-size: 1vw;
-  border: 1px solid #ccc;
-  outline: none;
-}
-
-.banner .slider .card .inputPanel button {
-  padding: 0.6vw 0.9vw;
-  font-size: 0.95vw;
-  border: none;
-  background: black;
-  color: white;
-  cursor: pointer;
-}
-
-.banner .slider .card::after {
-  content: "";
-  position: absolute;
-  inset: 1vw;
-  background-color: rgb(241, 241, 241);
-  border: 3px solid rgb(206, 206, 4);
-  transform: rotateY(180deg);
-  backface-visibility: hidden;
-  z-index: 5;
-  pointer-events: none;
-}
-
+/* =========================
+   Dish list
+   ========================= */
 .banner .slider .card .dishList {
   position: absolute;
   top: 4vw;
   left: 50%;
-  transform: translateX(-50%);
+
   width: 80%;
   margin: 0;
   padding-left: 1.2em;
-  text-align: left;
   box-sizing: border-box;
+
+  text-align: left;
+  transform: translateX(-50%);
 }
 
 .banner .slider .card .dishList li {
@@ -203,20 +185,24 @@ h1 {
   line-height: 1.2;
 }
 
+/* Smaller preview shown on non-active cards */
 .banner .slider .card .dishList.previewList {
   top: 3vw;
   max-height: 20vw;
   overflow: hidden;
+  font-size: 0.9vw;
 }
 
+/* Scrollable list shown on active card */
 .banner .slider .card .dishList.activeList {
   top: 3vw;
   max-height: 19vw;
   overflow-y: auto;
   overflow-x: hidden;
+
   padding-right: 0.6vw;
-  mask-image: linear-gradient(to bottom, black 80%, transparent);
-  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent);
+  font-size: 0.9vw;
+
   -ms-overflow-style: none;
   scrollbar-width: none;
   scroll-behavior: smooth;
@@ -226,7 +212,85 @@ h1 {
   display: none;
 }
 
+/* Optional fade at the bottom when content overflows */
+.banner .slider .card .dishList.activeList.fade {
+  mask-image: linear-gradient(to bottom, black 82%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, black 82%, transparent);
+}
+
+/* =========================
+   Modal
+   ========================= */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Popup box for entering a dish name */
+.modal {
+  width: 100%;
+  padding: 1vw;
+  box-sizing: border-box;
+
+  background: white;
+  border-radius: 1vw;
+}
+
+.modal h2 {
+  margin: -0.4vw 0 0.2vw 0;
+  font-size: 0.8vw;
+  text-align: left;
+}
+
+.modal input {
+  width: 100%;
+  margin-bottom: 0.5vw;
+  padding: 0.25vw;
+  box-sizing: border-box;
+
+  font-size: 0.7vw;
+  border: 0.1vw solid #ccc;
+  border-radius: 1vw;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5vw;
+}
+
+.cancelBtn,
+.doneBtn {
+  font-size: 0.65vw;
+  border-radius: 1vw;
+  cursor: pointer;
+  padding: 0.4vw;
+  min-width: 3vw;
+}
+
+.cancelBtn {
+  background: white;
+  border: 0.05vw solid #ccc;
+}
+
+.doneBtn {
+  background: black;
+  color: white;
+  border: none;
+}
+
+/* =========================
+   Portrait mode
+   ========================= */
 @media (orientation: portrait) {
+  /* Carousel becomes larger and deeper for phone screens */
   .banner .slider {
     width: 45vw;
     height: 75vw;
@@ -246,29 +310,91 @@ h1 {
       translateZ(calc(var(--quantity) * 8vw + 10vw)) scale(1.1);
   }
 
+  /* Larger title for smaller screens */
   h1 {
-    font-size: 3.5vw;
+    margin-top: 4vw;
+    font-size: 4vw;
   }
 
+  /* Slightly thicker visual framing inside cards */
+  .banner .slider .card::before,
+  .banner .slider .card::after {
+    inset: 2vw;
+    border-width: 2px;
+  }
+
+  /* Bigger tap target for the add button */
   .banner .slider .card.active .add {
     bottom: 4vw;
     width: 8vw;
   }
 
-  .banner .slider .card .inputPanel {
-    bottom: 12vw;
+  /* Dish list gets more room and larger text */
+  .banner .slider .card .dishList {
+    top: 12vw;
     width: 78%;
-    padding: 2vw;
-    gap: 1.5vw;
-  }
-
-  .banner .slider .card .inputPanel input {
-    padding: 2vw 2.4vw;
+    padding-left: 1.1em;
     font-size: 3.2vw;
   }
 
-  .banner .slider .card .inputPanel button {
-    padding: 2vw 2.5vw;
+  .banner .slider .card .dishList li {
+    margin: 1vw 0;
+    line-height: 1.35;
+  }
+
+  .banner .slider .card .dishList.previewList {
+    top: 8vw;
+    max-height: 80%;
     font-size: 3vw;
+  }
+
+  .banner .slider .card .dishList.activeList {
+    top: 8vw;
+    max-height: 80%;
+    padding-right: 1.5vw;
+    font-size: 3vw;
+  }
+
+  /* Modal becomes readable and touch-friendly */
+  .modalBackdrop {
+    padding: 5vw;
+    box-sizing: border-box;
+  }
+
+  .modal {
+    width: 100vw;
+    padding: 5vw;
+    border-radius: 4vw;
+  }
+
+  .modal h2 {
+    margin: -2vw 0 2vw 0;
+    font-size: 4.8vw;
+  }
+
+  .modal input {
+    margin-bottom: 4vw;
+    padding: 2.5vw;
+
+    font-size: 3.5vw;
+    border: 0.35vw solid #ccc;
+    border-radius: 3vw;
+  }
+
+  .modalActions {
+    gap: 2.5vw;
+  }
+
+  .cancelBtn,
+  .doneBtn {
+    min-width: 20vw;
+    padding: 2.5vw;
+
+    font-size: 3.6vw;
+    border-radius: 3vw;
+  }
+
+  .cancelBtn {
+    border: 0.35vw solid #ccc;
   }
 }
