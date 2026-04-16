@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -118,11 +119,11 @@ html, body {
   cursor: pointer;
 }
 
-.banner .slider .card:hover{
+.banner .slider .card:hover {
   cursor: pointer;
 }
 
-h1{
+h1 {
   font-size: 1.5vw;
 }
 
@@ -198,21 +199,32 @@ h1{
 }
 
 .banner .slider .card .dishList li {
-  backface-visibility: hidden;
   margin: 0.35vw 0;
   line-height: 1.2;
 }
 
-.banner .slider .card .dishList.previewList li {
-  backface-visibility: hidden;
-  font-size: 0.75vw;
+.banner .slider .card .dishList.previewList {
+  top: 3vw;
+  max-height: 20vw;
+  overflow: hidden;
 }
 
-.banner .slider .card .dishList.activeList li {
-  backface-visibility: hidden;
-  font-size: 1vw;
+.banner .slider .card .dishList.activeList {
+  top: 3vw;
+  max-height: 19vw;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.6vw;
+  mask-image: linear-gradient(to bottom, black 80%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 
+.banner .slider .card .dishList.activeList::-webkit-scrollbar {
+  display: none;
+}
 
 @media (orientation: portrait) {
   .banner .slider {
@@ -234,7 +246,7 @@ h1{
       translateZ(calc(var(--quantity) * 8vw + 10vw)) scale(1.1);
   }
 
-  h1{
+  h1 {
     font-size: 3.5vw;
   }
 
@@ -260,4 +272,3 @@ h1{
     font-size: 3vw;
   }
 }
-

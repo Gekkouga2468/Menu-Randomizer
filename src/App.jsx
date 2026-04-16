@@ -182,6 +182,7 @@ export default function App() {
 
               {card.dishes.length > 0 && (
                 <ul
+                  key={`${card.id}-${isActive}`}
                   className={`dishList ${isActive ? "activeList" : "previewList"}`}
                 >
                   {card.dishes.map((dish) => (
