@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+
 import plusIcon from "./assets/plusicon.png";
 import plusIcon1 from "./assets/plusicon1.png";
+import dots from "./assets/dots.png";
+import x from "./assets/x.png";
 
 export default function App() {
   /* =========================
@@ -9,9 +12,10 @@ export default function App() {
      ========================= */
   const MAX = 10;
   const STORAGE_KEY = "carousel-cards";
+  const DEFAULT_TITLE = "New Category";
 
   /* =========================
-     State
+     State: card data
      ========================= */
 
   // Load saved cards from localStorage on first render
@@ -25,36 +29,71 @@ export default function App() {
     }
   });
 
-  // Currently opened card
+  // Currently opened card id
   const [selectedCard, setSelectedCard] = useState(null);
 
-  // Current carousel rotation
+  // Current carousel rotation angle
   const [rotation, setRotation] = useState(0);
 
-  // Modal state for adding a dish
+  /* =========================
+     State: add-dish modal
+     ========================= */
+
+  // Controls the "Add dish" popup
   const [showInput, setShowInput] = useState(false);
+
+  // Input value for newly added dish
   const [inputValue, setInputValue] = useState("");
+
+  /* =========================
+     State: top-right menu / delete modal
+     ========================= */
+
+  // Controls the dots dropdown menu
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Controls the delete confirmation popup
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  /* =========================
+     State: edit mode
+     ========================= */
+
+  // Whether the active card is currently being edited
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Editable category title
+  const [editTitle, setEditTitle] = useState("");
+
+  // Editable copy of the dishes list
+  const [editDishes, setEditDishes] = useState([]);
 
   /* =========================
      Derived values
      ========================= */
 
-  // +1 because the default add-card tile is part of the carousel
+  // +1 because the default "add new card" tile is part of the carousel
   const quantity = cards.length + 1;
 
   /* =========================
-     Refs for drag / momentum
+     Refs: drag / momentum
      ========================= */
+
+  // Tracks whether user is dragging the carousel
   const isDragging = useRef(false);
+
+  // Tracks previous pointer position / time for velocity calculation
   const lastX = useRef(0);
   const lastTime = useRef(0);
+
+  // Momentum value used for auto-spin after dragging
   const velocity = useRef(0);
 
   /* =========================
      Effects
      ========================= */
 
-  // Save cards to localStorage whenever they change
+  // Save cards to localStorage whenever cards change
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
@@ -63,7 +102,7 @@ export default function App() {
     }
   }, [cards]);
 
-  // Auto-rotate the carousel when no card is selected
+  // Auto-rotate the carousel while no card is open
   useEffect(() => {
     if (selectedCard !== null) return;
 
@@ -72,6 +111,8 @@ export default function App() {
     const animate = () => {
       setRotation((prev) => {
         const next = prev + velocity.current + 0.15;
+
+        // Gradually reduce drag momentum over time
         velocity.current *= 0.95;
 
         if (Math.abs(velocity.current) < 0.001) {
@@ -90,6 +131,24 @@ export default function App() {
   }, [selectedCard]);
 
   /* =========================
+     Helpers
+     ========================= */
+
+  // Reset all temporary UI state related to modals / edit mode
+  const resetUIState = () => {
+    setShowInput(false);
+    setInputValue("");
+    setShowMenu(false);
+    setShowDeleteConfirm(false);
+    setIsEditing(false);
+    setEditTitle("");
+    setEditDishes([]);
+  };
+
+  // Find the currently selected card object
+  const activeCardData = cards.find((card) => card.id === selectedCard);
+
+  /* =========================
      Card actions
      ========================= */
 
@@ -104,7 +163,7 @@ export default function App() {
       ...prevCards,
       {
         id: Date.now(),
-        title: "New Category",
+        title: DEFAULT_TITLE,
         dishes: [],
       },
     ]);
@@ -116,22 +175,95 @@ export default function App() {
 
     setRotation(-angle);
     setSelectedCard(id);
-    setShowInput(false);
-    setInputValue("");
+    resetUIState();
+
+    // Stop any leftover momentum when opening a card
     velocity.current = 0;
   };
 
-  // Close the active card and reset modal/input state
+  // Close the active card and clear all temporary UI states
   const closeCard = () => {
     setSelectedCard(null);
+    resetUIState();
+  };
+
+  // Delete the currently selected card
+  const handleDeleteCard = () => {
+    if (selectedCard === null) return;
+
+    setCards((prevCards) =>
+      prevCards.filter((card) => card.id !== selectedCard),
+    );
+
+    setSelectedCard(null);
+    resetUIState();
+    velocity.current = 0;
+  };
+
+  /* =========================
+     Edit mode actions
+     ========================= */
+
+  // Enter edit mode and copy the current card data into editable state
+  const handleStartEdit = () => {
+    if (!activeCardData) return;
+
+    setEditTitle(activeCardData.title);
+    setEditDishes(activeCardData.dishes.map((dish) => ({ ...dish })));
+
+    setIsEditing(true);
+    setShowMenu(false);
     setShowInput(false);
-    setInputValue("");
+  };
+
+  // Update a dish name while editing
+  const handleEditDishChange = (dishId, value) => {
+    setEditDishes((prev) =>
+      prev.map((dish) =>
+        dish.id === dishId ? { ...dish, name: value } : dish,
+      ),
+    );
+  };
+
+  // Remove a dish from the editable list
+  const handleDeleteDish = (dishId) => {
+    setEditDishes((prev) => prev.filter((dish) => dish.id !== dishId));
+  };
+
+  // Save edited title + dishes back into the selected card
+  const handleSaveEdit = () => {
+    const trimmedTitle = editTitle.trim() || DEFAULT_TITLE;
+
+    // Trim dish names and remove empty rows
+    const cleanedDishes = editDishes
+      .map((dish) => ({
+        ...dish,
+        name: dish.name.trim(),
+      }))
+      .filter((dish) => dish.name !== "");
+
+    setCards((prevCards) =>
+      prevCards.map((card) =>
+        card.id === selectedCard
+          ? {
+              ...card,
+              title: trimmedTitle,
+              dishes: cleanedDishes,
+            }
+          : card,
+      ),
+    );
+
+    setIsEditing(false);
+    setEditTitle("");
+    setEditDishes([]);
   };
 
   /* =========================
      Drag interaction
      ========================= */
 
+  // Start dragging the carousel
   const handlePointerDown = (e) => {
     if (selectedCard !== null) return;
 
@@ -141,6 +273,7 @@ export default function App() {
     velocity.current = 0;
   };
 
+  // Rotate the carousel while dragging
   const handlePointerMove = (e) => {
     if (!isDragging.current || selectedCard !== null) return;
 
@@ -149,29 +282,34 @@ export default function App() {
     const deltaX = currentX - lastX.current;
     const deltaTime = currentTime - lastTime.current || 1;
 
+    // Convert horizontal drag to rotation amount
     const dragRotation = deltaX * 0.35;
     setRotation((prev) => prev + dragRotation);
 
+    // Save drag velocity for momentum after release
     velocity.current = (deltaX / deltaTime) * 2.2;
 
     lastX.current = currentX;
     lastTime.current = currentTime;
   };
 
+  // Stop dragging
   const handlePointerUp = () => {
     isDragging.current = false;
   };
 
   /* =========================
-     Modal / input actions
+     Add-dish modal actions
      ========================= */
 
+  // Open the add-dish popup
   const handleOpenInput = (e) => {
     e.stopPropagation();
+    setShowMenu(false);
     setShowInput(true);
   };
 
-  // Add a dish to the selected card
+  // Add a new dish to the currently selected card
   const handleDone = () => {
     const trimmed = inputValue.trim();
     if (!trimmed || selectedCard === null) return;
@@ -197,6 +335,7 @@ export default function App() {
     setShowInput(false);
   };
 
+  // Allow Enter key to submit new dish
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleDone();
@@ -204,11 +343,25 @@ export default function App() {
   };
 
   /* =========================
+     Visual helpers
+     ========================= */
+
+  // Add or remove the fade effect depending on scroll position
+  const updateFade = (el) => {
+    if (!el) return;
+
+    const isOverflowing = el.scrollHeight > el.clientHeight;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+
+    el.classList.toggle("fade", isOverflowing && !atBottom);
+  };
+
+  /* =========================
      Render
      ========================= */
   return (
     <div className="banner">
-      {/* Dark background when a card is open */}
+      {/* Dark background overlay shown when a card is open */}
       {selectedCard !== null && <div className="overlay" onClick={closeCard} />}
 
       <div
@@ -220,7 +373,7 @@ export default function App() {
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        {/* Default tile used to create a new card */}
+        {/* Default tile used to create a new category card */}
         <div
           className={`card defaultCard ${
             selectedCard !== null ? "collapsed" : ""
@@ -231,7 +384,7 @@ export default function App() {
           <img src={plusIcon} alt="Add card" />
         </div>
 
-        {/* Category cards */}
+        {/* Existing category cards */}
         {cards.map((card, index) => {
           const isActive = selectedCard === card.id;
 
@@ -240,7 +393,7 @@ export default function App() {
               key={card.id}
               className={`card ${isActive ? "active" : ""} ${
                 selectedCard !== null && !isActive ? "collapsed" : ""
-              }`}
+              } ${isActive && isEditing ? "editingCard" : ""}`}
               style={{ "--position": index + 2 }}
               onClick={() => {
                 if (selectedCard === null) {
@@ -248,28 +401,29 @@ export default function App() {
                 }
               }}
             >
-              <h1>
-                {card.title} {index + 1}
-              </h1>
+              {/* Title: normal mode vs edit mode */}
+              {isActive && isEditing ? (
+                <input
+                  className="editTitleInput"
+                  type="text"
+                  value={editTitle === "New Category" ? "" : editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Category name"
+                />
+              ) : (
+                <h1>{card.title}</h1>
+              )}
 
-              {/* Dish list */}
-              {card.dishes.length > 0 && (
+              {/* Dish preview / scrollable list in non-edit mode */}
+              {!isEditing && card.dishes.length > 0 && (
                 <ul
                   key={`${card.id}-${isActive}`}
                   className={`dishList ${
                     isActive ? "activeList" : "previewList"
                   }`}
-                  ref={(el) => {
-                    if (!el) return;
-
-                    const isOverflowing = el.scrollHeight > el.clientHeight;
-
-                    if (isOverflowing) {
-                      el.classList.add("fade");
-                    } else {
-                      el.classList.remove("fade");
-                    }
-                  }}
+                  ref={(el) => el && updateFade(el)}
+                  onScroll={(e) => updateFade(e.currentTarget)}
                 >
                   {card.dishes.map((dish) => (
                     <li key={dish.id}>{dish.name}</li>
@@ -277,18 +431,105 @@ export default function App() {
                 </ul>
               )}
 
-              {/* Active card controls */}
+              {/* Editable dish list */}
+              {isActive && isEditing && (
+                <div
+                  className="editDishList"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {editDishes.length > 0 ? (
+                    editDishes.map((dish) => (
+                      <div key={dish.id} className="editDishRow">
+                        <div className="inputWrapper">
+                          <input
+                            className="editDishInput"
+                            type="text"
+                            value={dish.name}
+                            onChange={(e) =>
+                              handleEditDishChange(dish.id, e.target.value)
+                            }
+                            placeholder="Dish name"
+                          />
+
+                          <img
+                            src={x}
+                            alt="Delete dish"
+                            className="deleteDishIcon"
+                            onClick={() => handleDeleteDish(dish.id)}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="emptyEditText">No dishes yet</p>
+                  )}
+                </div>
+              )}
+
+              {/* Controls shown only on the active card */}
               {isActive && (
                 <>
-                  <img
-                    className="add"
-                    src={plusIcon1}
-                    alt="Open input"
-                    onClick={handleOpenInput}
-                  />
+                  {/* Top-right dots menu (hidden during edit mode) */}
+                  {!isEditing && (
+                    <>
+                      <button
+                        className="menuButton"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMenu((prev) => !prev);
+                        }}
+                      >
+                        <img src={dots} alt="Card menu" />
+                      </button>
 
-                  {/* Simple modal for adding a dish */}
-                  {showInput && (
+                      {showMenu && (
+                        <div
+                          className="cardMenu"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="menuItem"
+                            onClick={handleStartEdit}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            className="menuItem deleteItem"
+                            onClick={() => {
+                              setShowMenu(false);
+                              setShowDeleteConfirm(true);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Bottom control: add button in normal mode, save button in edit mode */}
+                  {!isEditing ? (
+                    <img
+                      className="add"
+                      src={plusIcon1}
+                      alt="Open input"
+                      onClick={handleOpenInput}
+                    />
+                  ) : (
+                    <button
+                      className="saveButton"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveEdit();
+                      }}
+                    >
+                      Save
+                    </button>
+                  )}
+
+                  {/* Add-dish modal */}
+                  {showInput && !isEditing && (
                     <div
                       className="modalBackdrop"
                       onClick={() => setShowInput(false)}
@@ -318,6 +559,38 @@ export default function App() {
 
                           <button className="doneBtn" onClick={handleDone}>
                             Done
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Delete-card confirmation modal */}
+                  {showDeleteConfirm && (
+                    <div
+                      className="modalBackdrop"
+                      onClick={() => setShowDeleteConfirm(false)}
+                    >
+                      <div
+                        className="modal confirmModal"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <h2>Delete category?</h2>
+                        <p>Do you want to delete this entire card?</p>
+
+                        <div className="modalActions">
+                          <button
+                            className="cancelBtn"
+                            onClick={() => setShowDeleteConfirm(false)}
+                          >
+                            No
+                          </button>
+
+                          <button
+                            className="doneBtn"
+                            onClick={handleDeleteCard}
+                          >
+                            Yes
                           </button>
                         </div>
                       </div>
