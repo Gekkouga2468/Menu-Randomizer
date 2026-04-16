@@ -292,10 +292,10 @@ h1 {
 /* Scroll area for editable dishes */
 .editDishList {
   position: absolute;
-  top: 8vw;
+  top: 3vw;
   left: 50%;
   width: 80%;
-  max-height: 19vw;
+  max-height: 70%;
   overflow-y: auto;
   overflow-x: hidden;
   transform: translateX(-50%);
@@ -471,6 +471,7 @@ h1 {
   font-size: 0.7vw;
   border: 0.1vw solid #ccc;
   border-radius: 1vw;
+  outline: none;
 }
 
 .modalActions {
