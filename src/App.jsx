@@ -5,6 +5,7 @@ import plusIcon from "./assets/plusicon.png";
 import plusIcon1 from "./assets/plusicon1.png";
 import dots from "./assets/dots.png";
 import x from "./assets/x.png";
+import menu from "./assets/Menu.png";
 
 export default function App() {
   /* =========================
@@ -75,6 +76,9 @@ export default function App() {
   // +1 because the default "add new card" tile is part of the carousel
   const quantity = cards.length + 1;
 
+  const cardTitles = cards
+    .map((card) => card.title.trim())
+    .filter((title) => title !== "");
   /* =========================
      Refs: drag / momentum
      ========================= */
@@ -88,6 +92,8 @@ export default function App() {
 
   // Momentum value used for auto-spin after dragging
   const velocity = useRef(0);
+
+  const [isMenuClicked, setIsMenuClicked] = useState(false);
 
   /* =========================
      Effects
@@ -104,13 +110,13 @@ export default function App() {
 
   // Auto-rotate the carousel while no card is open
   useEffect(() => {
-    if (selectedCard !== null) return;
+    if (selectedCard !== null || isMenuClicked) return;
 
     let animationFrameId;
 
     const animate = () => {
       setRotation((prev) => {
-        const next = prev + velocity.current + 0.15;
+        const next = prev + velocity.current + 0.04;
 
         // Gradually reduce drag momentum over time
         velocity.current *= 0.95;
@@ -128,7 +134,7 @@ export default function App() {
     animationFrameId = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [selectedCard]);
+  }, [selectedCard, isMenuClicked]);
 
   /* =========================
      Helpers
@@ -265,7 +271,7 @@ export default function App() {
 
   // Start dragging the carousel
   const handlePointerDown = (e) => {
-    if (selectedCard !== null) return;
+    if (selectedCard !== null || isMenuClicked) return;
 
     isDragging.current = true;
     lastX.current = e.clientX;
@@ -275,7 +281,7 @@ export default function App() {
 
   // Rotate the carousel while dragging
   const handlePointerMove = (e) => {
-    if (!isDragging.current || selectedCard !== null) return;
+    if (!isDragging.current || selectedCard !== null || isMenuClicked) return;
 
     const currentX = e.clientX;
     const currentTime = performance.now();
@@ -283,11 +289,11 @@ export default function App() {
     const deltaTime = currentTime - lastTime.current || 1;
 
     // Convert horizontal drag to rotation amount
-    const dragRotation = deltaX * 0.35;
+    const dragRotation = deltaX * 0.03;
     setRotation((prev) => prev + dragRotation);
 
     // Save drag velocity for momentum after release
-    velocity.current = (deltaX / deltaTime) * 2.2;
+    velocity.current = (deltaX / deltaTime) * 0.3;
 
     lastX.current = currentX;
     lastTime.current = currentTime;
@@ -360,247 +366,292 @@ export default function App() {
      Render
      ========================= */
   return (
-    <div className="banner">
-      {/* Dark background overlay shown when a card is open */}
-      {selectedCard !== null && <div className="overlay" onClick={closeCard} />}
+    <div>
+      <div className="banner">
+        {/* Dark background overlay shown when a card is open */}
+        {(selectedCard !== null || isMenuClicked) && (
+          <div
+            className="overlay"
+            onClick={() => {
+              if (selectedCard !== null) {
+                closeCard();
+              }
+              if (isMenuClicked) {
+                setIsMenuClicked(false);
+              }
+            }}
+          />
+        )}
 
-      <div
-        className={`slider ${selectedCard !== null ? "paused" : ""}`}
-        style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-      >
-        {/* Default tile used to create a new category card */}
         <div
-          className={`card defaultCard ${
-            selectedCard !== null ? "collapsed" : ""
-          }`}
-          style={{ "--position": 1 }}
-          onClick={selectedCard === null ? newCard : undefined}
+          className={`menuBanner ${isMenuClicked ? "active" : ""}`}
+          onClick={(e) => e.stopPropagation()}
         >
-          <img src={plusIcon} alt="Add card" />
-        </div>
-
-        {/* Existing category cards */}
-        {cards.map((card, index) => {
-          const isActive = selectedCard === card.id;
-
-          return (
-            <div
-              key={card.id}
-              className={`card ${isActive ? "active" : ""} ${
-                selectedCard !== null && !isActive ? "collapsed" : ""
-              } ${isActive && isEditing ? "editingCard" : ""}`}
-              style={{ "--position": index + 2 }}
-              onClick={() => {
-                if (selectedCard === null) {
-                  handleSelectCard(index + 2, card.id);
-                }
-              }}
-            >
-              {/* Title: normal mode vs edit mode */}
-              {isActive && isEditing ? (
-                <input
-                  className="editTitleInput"
-                  type="text"
-                  value={editTitle === "New Category" ? "" : editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  placeholder="Category name"
-                />
+          <img
+            onClick={(e) => {
+              e.stopPropagation();
+              velocity.current = 0;
+              isDragging.current = false;
+              setIsMenuClicked((prev) => !prev);
+            }}
+            src={menu}
+            alt="Menu Icon"
+          />
+          {isMenuClicked && (
+            <div className="menuBannerContent">
+              {cardTitles.length > 0 ? (
+                cardTitles.map((title, index) => (
+                  <p key={index} className="menuBannerItem">
+                    {title}
+                  </p>
+                ))
               ) : (
-                <h1>{card.title}</h1>
-              )}
-
-              {/* Dish preview / scrollable list in non-edit mode */}
-              {!isEditing && card.dishes.length > 0 && (
-                <ul
-                  key={`${card.id}-${isActive}`}
-                  className={`dishList ${
-                    isActive ? "activeList" : "previewList"
-                  }`}
-                  ref={(el) => el && updateFade(el)}
-                  onScroll={(e) => updateFade(e.currentTarget)}
-                >
-                  {card.dishes.map((dish) => (
-                    <li key={dish.id}>{dish.name}</li>
-                  ))}
-                </ul>
-              )}
-
-              {/* Editable dish list */}
-              {isActive && isEditing && (
-                <div
-                  className="editDishList"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {editDishes.length > 0 ? (
-                    editDishes.map((dish) => (
-                      <div key={dish.id} className="editDishRow">
-                        <div className="inputWrapper">
-                          <input
-                            className="editDishInput"
-                            type="text"
-                            value={dish.name}
-                            onChange={(e) =>
-                              handleEditDishChange(dish.id, e.target.value)
-                            }
-                            placeholder="Dish name"
-                          />
-
-                          <img
-                            src={x}
-                            alt="Delete dish"
-                            className="deleteDishIcon"
-                            onClick={() => handleDeleteDish(dish.id)}
-                          />
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="emptyEditText">No dishes yet</p>
-                  )}
-                </div>
-              )}
-
-              {/* Controls shown only on the active card */}
-              {isActive && (
-                <>
-                  {/* Top-right dots menu (hidden during edit mode) */}
-                  {!isEditing && (
-                    <>
-                      <button
-                        className="menuButton"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowMenu((prev) => !prev);
-                        }}
-                      >
-                        <img src={dots} alt="Card menu" />
-                      </button>
-
-                      {showMenu && (
-                        <div
-                          className="cardMenu"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            className="menuItem"
-                            onClick={handleStartEdit}
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            className="menuItem deleteItem"
-                            onClick={() => {
-                              setShowMenu(false);
-                              setShowDeleteConfirm(true);
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Bottom control: add button in normal mode, save button in edit mode */}
-                  {!isEditing ? (
-                    <img
-                      className="add"
-                      src={plusIcon1}
-                      alt="Open input"
-                      onClick={handleOpenInput}
-                    />
-                  ) : (
-                    <button
-                      className="saveButton"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSaveEdit();
-                      }}
-                    >
-                      Save
-                    </button>
-                  )}
-
-                  {/* Add-dish modal */}
-                  {showInput && !isEditing && (
-                    <div
-                      className="modalBackdrop"
-                      onClick={() => setShowInput(false)}
-                    >
-                      <div
-                        className="modal"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <h2>Add dish</h2>
-
-                        <input
-                          type="text"
-                          placeholder="Enter dish name"
-                          value={inputValue}
-                          onChange={(e) => setInputValue(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          autoFocus
-                        />
-
-                        <div className="modalActions">
-                          <button
-                            className="cancelBtn"
-                            onClick={() => setShowInput(false)}
-                          >
-                            Cancel
-                          </button>
-
-                          <button className="doneBtn" onClick={handleDone}>
-                            Done
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Delete-card confirmation modal */}
-                  {showDeleteConfirm && (
-                    <div
-                      className="modalBackdrop"
-                      onClick={() => setShowDeleteConfirm(false)}
-                    >
-                      <div
-                        className="modal confirmModal"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <h2>Delete category?</h2>
-                        <p>Do you want to delete this entire card?</p>
-
-                        <div className="modalActions">
-                          <button
-                            className="cancelBtn"
-                            onClick={() => setShowDeleteConfirm(false)}
-                          >
-                            No
-                          </button>
-
-                          <button
-                            className="doneBtn"
-                            onClick={handleDeleteCard}
-                          >
-                            Yes
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
+                <p className="menuBannerItem empty">No categories yet</p>
               )}
             </div>
-          );
-        })}
+          )}
+        </div>
+
+        <div
+          className={`slider ${selectedCard !== null ? "cardOpen" : ""} ${
+            isMenuClicked ? "menuOpen" : ""
+          }`}
+          style={{ "--quantity": quantity, "--rotation": `${rotation}deg` }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        >
+          {/* Default tile used to create a new category card */}
+          <div
+            className={`card defaultCard ${
+              selectedCard !== null ? "collapsed" : ""
+            }`}
+            style={{ "--position": 1 }}
+            onClick={selectedCard === null ? newCard : undefined}
+          >
+            <img src={plusIcon} alt="Add card" />
+          </div>
+
+          {/* Existing category cards */}
+          {cards.map((card, index) => {
+            const isActive = selectedCard === card.id;
+
+            return (
+              <div
+                key={card.id}
+                className={`card ${isActive ? "active" : ""} ${
+                  selectedCard !== null && !isActive ? "collapsed" : ""
+                } ${isActive && isEditing ? "editingCard" : ""}`}
+                style={{ "--position": index + 2 }}
+                onClick={() => {
+                  if (selectedCard === null) {
+                    handleSelectCard(index + 2, card.id);
+                  }
+                }}
+              >
+                {/* Title: normal mode vs edit mode */}
+                {isActive && isEditing ? (
+                  <input
+                    className="editTitleInput"
+                    type="text"
+                    value={editTitle === "New Category" ? "" : editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="Category name"
+                  />
+                ) : (
+                  <h1>{card.title}</h1>
+                )}
+
+                {/* Dish preview / scrollable list in non-edit mode */}
+                {!isEditing && card.dishes.length > 0 && (
+                  <ul
+                    key={`${card.id}-${isActive}`}
+                    className={`dishList ${
+                      isActive ? "activeList" : "previewList"
+                    }`}
+                    ref={(el) => el && updateFade(el)}
+                    onScroll={(e) => updateFade(e.currentTarget)}
+                  >
+                    {card.dishes.map((dish) => (
+                      <li key={dish.id}>{dish.name}</li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Editable dish list */}
+                {isActive && isEditing && (
+                  <div
+                    className="editDishList"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {editDishes.length > 0 ? (
+                      editDishes.map((dish) => (
+                        <div key={dish.id} className="editDishRow">
+                          <div className="inputWrapper">
+                            <input
+                              className="editDishInput"
+                              type="text"
+                              value={dish.name}
+                              onChange={(e) =>
+                                handleEditDishChange(dish.id, e.target.value)
+                              }
+                              placeholder="Dish name"
+                            />
+
+                            <img
+                              src={x}
+                              alt="Delete dish"
+                              className="deleteDishIcon"
+                              onClick={() => handleDeleteDish(dish.id)}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="emptyEditText">No dishes yet</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Controls shown only on the active card */}
+                {isActive && (
+                  <>
+                    {/* Top-right dots menu (hidden during edit mode) */}
+                    {!isEditing && (
+                      <>
+                        <button
+                          className="menuButton"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu((prev) => !prev);
+                          }}
+                        >
+                          <img src={dots} alt="Card menu" />
+                        </button>
+
+                        {showMenu && (
+                          <div
+                            className="cardMenu"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="menuItem"
+                              onClick={handleStartEdit}
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              className="menuItem deleteItem"
+                              onClick={() => {
+                                setShowMenu(false);
+                                setShowDeleteConfirm(true);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Bottom control: add button in normal mode, save button in edit mode */}
+                    {!isEditing ? (
+                      <img
+                        className="add"
+                        src={plusIcon1}
+                        alt="Open input"
+                        onClick={handleOpenInput}
+                      />
+                    ) : (
+                      <button
+                        className="saveButton"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveEdit();
+                        }}
+                      >
+                        Save
+                      </button>
+                    )}
+
+                    {/* Add-dish modal */}
+                    {showInput && !isEditing && (
+                      <div
+                        className="modalBackdrop"
+                        onClick={() => setShowInput(false)}
+                      >
+                        <div
+                          className="modal"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <h2>Add dish</h2>
+
+                          <input
+                            type="text"
+                            placeholder="Enter dish name"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                          />
+
+                          <div className="modalActions">
+                            <button
+                              className="cancelBtn"
+                              onClick={() => setShowInput(false)}
+                            >
+                              Cancel
+                            </button>
+
+                            <button className="doneBtn" onClick={handleDone}>
+                              Done
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delete-card confirmation modal */}
+                    {showDeleteConfirm && (
+                      <div
+                        className="modalBackdrop"
+                        onClick={() => setShowDeleteConfirm(false)}
+                      >
+                        <div
+                          className="modal confirmModal"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <h2>Delete category?</h2>
+                          <p>Do you want to delete this entire card?</p>
+
+                          <div className="modalActions">
+                            <button
+                              className="cancelBtn"
+                              onClick={() => setShowDeleteConfirm(false)}
+                            >
+                              No
+                            </button>
+
+                            <button
+                              className="doneBtn"
+                              onClick={handleDeleteCard}
+                            >
+                              Yes
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
