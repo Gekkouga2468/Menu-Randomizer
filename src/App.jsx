@@ -95,6 +95,9 @@ export default function App() {
 
   const [isMenuClicked, setIsMenuClicked] = useState(false);
 
+  const pointerStartX = useRef(0);
+  const didDrag = useRef(false);
+
   /* =========================
      Effects
      ========================= */
@@ -274,6 +277,9 @@ export default function App() {
     if (selectedCard !== null || isMenuClicked) return;
 
     isDragging.current = true;
+    didDrag.current = false;
+    pointerStartX.current = e.clientX;
+
     lastX.current = e.clientX;
     lastTime.current = performance.now();
     velocity.current = 0;
@@ -288,11 +294,13 @@ export default function App() {
     const deltaX = currentX - lastX.current;
     const deltaTime = currentTime - lastTime.current || 1;
 
-    // Convert horizontal drag to rotation amount
+    if (Math.abs(currentX - pointerStartX.current) > 6) {
+      didDrag.current = true;
+    }
+
     const dragRotation = deltaX * 0.03;
     setRotation((prev) => prev + dragRotation);
 
-    // Save drag velocity for momentum after release
     velocity.current = (deltaX / deltaTime) * 0.3;
 
     lastX.current = currentX;
@@ -446,9 +454,10 @@ export default function App() {
                 } ${isActive && isEditing ? "editingCard" : ""}`}
                 style={{ "--position": index + 2 }}
                 onClick={() => {
-                  if (selectedCard === null) {
+                  if (selectedCard === null && !didDrag.current) {
                     handleSelectCard(index + 2, card.id);
                   }
+                  didDrag.current = false;
                 }}
               >
                 {/* Title: normal mode vs edit mode */}
