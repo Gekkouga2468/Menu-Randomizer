@@ -7,19 +7,79 @@ import dots from "./assets/dots.png";
 import x from "./assets/x.png";
 import menu from "./assets/Menu.png";
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  TouchSensor,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+/* =========================
+   Sortable menu row
+   ========================= */
+
+/*
+  Represents one category row inside the side menu.
+
+  The row itself is sortable through dnd-kit.
+  The small menu icon on the right acts as the drag handle.
+*/
+function SortableMenuRow({ item, icon }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="menuBannerRow">
+      <p className="menuBannerItem">{item.title}</p>
+
+      <img
+        className="menuIcon dragHandle"
+        src={icon}
+        alt="Reorder category"
+        draggable={false}
+        {...attributes}
+        {...listeners}
+      />
+    </div>
+  );
+}
+
 export default function App() {
   /* =========================
      Constants
      ========================= */
+
   const MAX = 10;
   const STORAGE_KEY = "carousel-cards";
   const DEFAULT_TITLE = "New Category";
+  const AUTO_SPIN_SPEED = 0.04;
+  const DRAG_THRESHOLD = 6;
 
   /* =========================
-     State: card data
+     Main card state
      ========================= */
 
-  // Load saved cards from localStorage on first render
   const [cards, setCards] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -30,79 +90,118 @@ export default function App() {
     }
   });
 
-  // Currently opened card id
+  /*
+    cardCycle:
+    Separate ordering used only for the side menu / category cycle.
+    Reordering this does NOT change the order of cards in the carousel.
+  */
+  const [cardCycle, setCardCycle] = useState(() =>
+    cards
+      .map((card) => ({
+        id: card.id,
+        title: card.title.trim() || DEFAULT_TITLE,
+      }))
+      .filter((item) => item.title !== ""),
+  );
+
+  /* =========================
+     UI state
+     ========================= */
+
+  // The currently opened card in the carousel
   const [selectedCard, setSelectedCard] = useState(null);
 
-  // Current carousel rotation angle
+  // The current rotation angle of the carousel
   const [rotation, setRotation] = useState(0);
 
-  /* =========================
-     State: add-dish modal
-     ========================= */
-
-  // Controls the "Add dish" popup
+  // Controls the add-dish popup
   const [showInput, setShowInput] = useState(false);
 
-  // Input value for newly added dish
+  // Current value inside the add-dish input
   const [inputValue, setInputValue] = useState("");
 
-  /* =========================
-     State: top-right menu / delete modal
-     ========================= */
-
-  // Controls the dots dropdown menu
+  // Controls the card's top-right dropdown menu
   const [showMenu, setShowMenu] = useState(false);
 
-  // Controls the delete confirmation popup
+  // Controls the delete-card confirmation popup
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  /* =========================
-     State: edit mode
-     ========================= */
-
-  // Whether the active card is currently being edited
+  // Whether the current active card is in edit mode
   const [isEditing, setIsEditing] = useState(false);
 
-  // Editable category title
+  // Temporary editable title for the active card
   const [editTitle, setEditTitle] = useState("");
 
-  // Editable copy of the dishes list
+  // Temporary editable dishes for the active card
   const [editDishes, setEditDishes] = useState([]);
+
+  // Controls the side menu banner
+  const [isMenuClicked, setIsMenuClicked] = useState(false);
 
   /* =========================
      Derived values
      ========================= */
 
-  // +1 because the default "add new card" tile is part of the carousel
+  /*
+    The default "add new card" tile counts as one item in the carousel,
+    so quantity is cards.length + 1.
+  */
   const quantity = cards.length + 1;
 
-  const cardTitles = cards
-    .map((card) => card.title.trim())
-    .filter((title) => title !== "");
+  // The full card object for the currently selected card
+  const activeCardData = cards.find((card) => card.id === selectedCard);
+
   /* =========================
-     Refs: drag / momentum
+     Drag / animation refs
      ========================= */
 
-  // Tracks whether user is dragging the carousel
+  // Whether the user is dragging the carousel
   const isDragging = useRef(false);
 
-  // Tracks previous pointer position / time for velocity calculation
+  // Pointer tracking for drag velocity
   const lastX = useRef(0);
   const lastTime = useRef(0);
 
-  // Momentum value used for auto-spin after dragging
+  // Momentum applied after releasing a drag
   const velocity = useRef(0);
 
-  const [isMenuClicked, setIsMenuClicked] = useState(false);
-
+  // Drag detection for distinguishing click vs drag
   const pointerStartX = useRef(0);
   const didDrag = useRef(false);
+
+  /* =========================
+     DnD sensors
+     ========================= */
+
+  /*
+    dnd-kit sensor for the side menu reorder.
+    distance: 6 means the user must move 6px before drag begins.
+  */
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 8,
+      },
+    }),
+  );
 
   /* =========================
      Effects
      ========================= */
 
-  // Save cards to localStorage whenever cards change
+  /*
+    Persist cards to localStorage whenever they change.
+    This saves:
+    - titles
+    - dishes
+    - card order in the carousel
+  */
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
@@ -111,7 +210,54 @@ export default function App() {
     }
   }, [cards]);
 
-  // Auto-rotate the carousel while no card is open
+  /*
+    Keep cardCycle in sync with cards.
+
+    This handles:
+    - title edits
+    - deleted cards
+    - newly added cards
+
+    It preserves the user's custom cycle order as much as possible.
+  */
+  useEffect(() => {
+    setCardCycle((prevCycle) => {
+      const prevIds = new Set(prevCycle.map((item) => item.id));
+
+      // Keep existing cycle items, but update their titles from cards
+      const updatedCycle = prevCycle
+        .map((item) => {
+          const matchingCard = cards.find((card) => card.id === item.id);
+          if (!matchingCard) return null;
+
+          return {
+            id: matchingCard.id,
+            title: matchingCard.title.trim() || DEFAULT_TITLE,
+          };
+        })
+        .filter(Boolean);
+
+      // Add newly created cards to the end of the cycle
+      const newItems = cards
+        .filter((card) => !prevIds.has(card.id))
+        .map((card) => ({
+          id: card.id,
+          title: card.title.trim() || DEFAULT_TITLE,
+        }));
+
+      return [...updatedCycle, ...newItems];
+    });
+  }, [cards]);
+
+  /*
+    Auto-rotate the carousel while:
+    - no card is open
+    - side menu is not open
+
+    The carousel rotates with:
+    - a constant auto-spin speed
+    - leftover drag momentum
+  */
   useEffect(() => {
     if (selectedCard !== null || isMenuClicked) return;
 
@@ -119,9 +265,9 @@ export default function App() {
 
     const animate = () => {
       setRotation((prev) => {
-        const next = prev + velocity.current + 0.04;
+        const next = prev + velocity.current + AUTO_SPIN_SPEED;
 
-        // Gradually reduce drag momentum over time
+        // Gradually reduce momentum after dragging
         velocity.current *= 0.95;
 
         if (Math.abs(velocity.current) < 0.001) {
@@ -140,10 +286,15 @@ export default function App() {
   }, [selectedCard, isMenuClicked]);
 
   /* =========================
-     Helpers
+     Helper functions
      ========================= */
 
-  // Reset all temporary UI state related to modals / edit mode
+  /*
+    Reset temporary UI state related to:
+    - popups
+    - edit mode
+    - menus
+  */
   const resetUIState = () => {
     setShowInput(false);
     setInputValue("");
@@ -154,14 +305,14 @@ export default function App() {
     setEditDishes([]);
   };
 
-  // Find the currently selected card object
-  const activeCardData = cards.find((card) => card.id === selectedCard);
-
   /* =========================
      Card actions
      ========================= */
 
-  // Create a new category card
+  /*
+    Create a new category card.
+    It starts with the default title and no dishes.
+  */
   const newCard = () => {
     if (cards.length >= MAX) {
       alert("Maximum number of category reached");
@@ -178,7 +329,9 @@ export default function App() {
     ]);
   };
 
-  // Open a card and rotate it to the front
+  /*
+    Open a card and rotate it to the front of the carousel.
+  */
   const handleSelectCard = (position, id) => {
     const angle = (position - 1) * (360 / quantity);
 
@@ -186,17 +339,21 @@ export default function App() {
     setSelectedCard(id);
     resetUIState();
 
-    // Stop any leftover momentum when opening a card
+    // Stop remaining momentum once a card is opened
     velocity.current = 0;
   };
 
-  // Close the active card and clear all temporary UI states
+  /*
+    Close the currently active card.
+  */
   const closeCard = () => {
     setSelectedCard(null);
     resetUIState();
   };
 
-  // Delete the currently selected card
+  /*
+    Delete the currently selected card from cards.
+  */
   const handleDeleteCard = () => {
     if (selectedCard === null) return;
 
@@ -213,7 +370,10 @@ export default function App() {
      Edit mode actions
      ========================= */
 
-  // Enter edit mode and copy the current card data into editable state
+  /*
+    Enter edit mode for the active card.
+    Copy its title and dishes into temporary editable state.
+  */
   const handleStartEdit = () => {
     if (!activeCardData) return;
 
@@ -225,7 +385,9 @@ export default function App() {
     setShowInput(false);
   };
 
-  // Update a dish name while editing
+  /*
+    Update the name of a dish while editing.
+  */
   const handleEditDishChange = (dishId, value) => {
     setEditDishes((prev) =>
       prev.map((dish) =>
@@ -234,16 +396,19 @@ export default function App() {
     );
   };
 
-  // Remove a dish from the editable list
+  /*
+    Remove a dish from the editable dish list.
+  */
   const handleDeleteDish = (dishId) => {
     setEditDishes((prev) => prev.filter((dish) => dish.id !== dishId));
   };
 
-  // Save edited title + dishes back into the selected card
+  /*
+    Save edited title + edited dishes back into the real cards array.
+  */
   const handleSaveEdit = () => {
     const trimmedTitle = editTitle.trim() || DEFAULT_TITLE;
 
-    // Trim dish names and remove empty rows
     const cleanedDishes = editDishes
       .map((dish) => ({
         ...dish,
@@ -269,10 +434,13 @@ export default function App() {
   };
 
   /* =========================
-     Drag interaction
+     Carousel drag interactions
      ========================= */
 
-  // Start dragging the carousel
+  /*
+    Start dragging the carousel.
+    Also reset click-vs-drag detection.
+  */
   const handlePointerDown = (e) => {
     if (selectedCard !== null || isMenuClicked) return;
 
@@ -285,7 +453,10 @@ export default function App() {
     velocity.current = 0;
   };
 
-  // Rotate the carousel while dragging
+  /*
+    Rotate the carousel while dragging.
+    If the pointer moves enough, treat it as a drag instead of a click.
+  */
   const handlePointerMove = (e) => {
     if (!isDragging.current || selectedCard !== null || isMenuClicked) return;
 
@@ -294,36 +465,42 @@ export default function App() {
     const deltaX = currentX - lastX.current;
     const deltaTime = currentTime - lastTime.current || 1;
 
-    if (Math.abs(currentX - pointerStartX.current) > 6) {
+    if (Math.abs(currentX - pointerStartX.current) > DRAG_THRESHOLD) {
       didDrag.current = true;
     }
 
-    const dragRotation = deltaX * 0.03;
+    const dragRotation = deltaX * 0.05;
     setRotation((prev) => prev + dragRotation);
 
-    velocity.current = (deltaX / deltaTime) * 0.3;
+    velocity.current = (deltaX / deltaTime) * 0.8;
 
     lastX.current = currentX;
     lastTime.current = currentTime;
   };
 
-  // Stop dragging
+  /*
+    Stop dragging the carousel.
+  */
   const handlePointerUp = () => {
     isDragging.current = false;
   };
 
   /* =========================
-     Add-dish modal actions
+     Add dish actions
      ========================= */
 
-  // Open the add-dish popup
+  /*
+    Open the add-dish input popup.
+  */
   const handleOpenInput = (e) => {
     e.stopPropagation();
     setShowMenu(false);
     setShowInput(true);
   };
 
-  // Add a new dish to the currently selected card
+  /*
+    Add a new dish to the currently selected card.
+  */
   const handleDone = () => {
     const trimmed = inputValue.trim();
     if (!trimmed || selectedCard === null) return;
@@ -349,7 +526,9 @@ export default function App() {
     setShowInput(false);
   };
 
-  // Allow Enter key to submit new dish
+  /*
+    Allow pressing Enter to submit a new dish.
+  */
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleDone();
@@ -357,10 +536,13 @@ export default function App() {
   };
 
   /* =========================
-     Visual helpers
+     Visual helper
      ========================= */
 
-  // Add or remove the fade effect depending on scroll position
+  /*
+    Adds or removes the fade class on long scrollable dish lists.
+    This creates the subtle fade at the bottom when more content exists.
+  */
   const updateFade = (el) => {
     if (!el) return;
 
@@ -371,30 +553,51 @@ export default function App() {
   };
 
   /* =========================
+     Menu reorder actions
+     ========================= */
+
+  /*
+    Reorder only the side-menu cycle, not the real cards array.
+  */
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    setCardCycle((prevCycle) => {
+      const oldIndex = prevCycle.findIndex((item) => item.id === active.id);
+      const newIndex = prevCycle.findIndex((item) => item.id === over.id);
+
+      return arrayMove(prevCycle, oldIndex, newIndex);
+    });
+  };
+
+  /* =========================
      Render
      ========================= */
+
   return (
     <div>
       <div className="banner">
-        {/* Dark background overlay shown when a card is open */}
+        {/* Overlay shown whenever a card or the side menu is open */}
         {(selectedCard !== null || isMenuClicked) && (
           <div
             className="overlay"
             onClick={() => {
-              if (selectedCard !== null) {
-                closeCard();
-              }
-              if (isMenuClicked) {
-                setIsMenuClicked(false);
-              }
+              if (selectedCard !== null) closeCard();
+              if (isMenuClicked) setIsMenuClicked(false);
             }}
           />
         )}
 
+        {/* =========================
+            Side menu banner
+           ========================= */}
         <div
           className={`menuBanner ${isMenuClicked ? "active" : ""}`}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Top-left menu button */}
           <img
             onClick={(e) => {
               e.stopPropagation();
@@ -402,17 +605,29 @@ export default function App() {
               isDragging.current = false;
               setIsMenuClicked((prev) => !prev);
             }}
+            draggable={false}
             src={menu}
             alt="Menu Icon"
           />
+
+          {/* Sortable category cycle list */}
           {isMenuClicked && (
             <div className="menuBannerContent">
-              {cardTitles.length > 0 ? (
-                cardTitles.map((title, index) => (
-                  <p key={index} className="menuBannerItem">
-                    {title}
-                  </p>
-                ))
+              {cards.length > 0 ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={cardCycle.map((item) => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {cardCycle.map((item) => (
+                      <SortableMenuRow key={item.id} item={item} icon={menu} />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               ) : (
                 <p className="menuBannerItem empty">No categories yet</p>
               )}
@@ -420,6 +635,9 @@ export default function App() {
           )}
         </div>
 
+        {/* =========================
+            Carousel slider
+           ========================= */}
         <div
           className={`slider ${selectedCard !== null ? "cardOpen" : ""} ${
             isMenuClicked ? "menuOpen" : ""
@@ -431,7 +649,7 @@ export default function App() {
           onPointerCancel={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
-          {/* Default tile used to create a new category card */}
+          {/* Default "add new card" tile */}
           <div
             className={`card defaultCard ${
               selectedCard !== null ? "collapsed" : ""
@@ -439,7 +657,7 @@ export default function App() {
             style={{ "--position": 1 }}
             onClick={selectedCard === null ? newCard : undefined}
           >
-            <img src={plusIcon} alt="Add card" />
+            <img src={plusIcon} alt="Add card" draggable={false} />
           </div>
 
           {/* Existing category cards */}
@@ -460,7 +678,7 @@ export default function App() {
                   didDrag.current = false;
                 }}
               >
-                {/* Title: normal mode vs edit mode */}
+                {/* Card title */}
                 {isActive && isEditing ? (
                   <input
                     className="editTitleInput"
@@ -474,7 +692,7 @@ export default function App() {
                   <h1>{card.title}</h1>
                 )}
 
-                {/* Dish preview / scrollable list in non-edit mode */}
+                {/* Normal dish list */}
                 {!isEditing && card.dishes.length > 0 && (
                   <ul
                     key={`${card.id}-${isActive}`}
@@ -514,6 +732,7 @@ export default function App() {
                               src={x}
                               alt="Delete dish"
                               className="deleteDishIcon"
+                              draggable={false}
                               onClick={() => handleDeleteDish(dish.id)}
                             />
                           </div>
@@ -528,7 +747,7 @@ export default function App() {
                 {/* Controls shown only on the active card */}
                 {isActive && (
                   <>
-                    {/* Top-right dots menu (hidden during edit mode) */}
+                    {/* Top-right card menu */}
                     {!isEditing && (
                       <>
                         <button
@@ -538,7 +757,7 @@ export default function App() {
                             setShowMenu((prev) => !prev);
                           }}
                         >
-                          <img src={dots} alt="Card menu" />
+                          <img src={dots} alt="Card menu" draggable={false} />
                         </button>
 
                         {showMenu && (
@@ -567,13 +786,14 @@ export default function App() {
                       </>
                     )}
 
-                    {/* Bottom control: add button in normal mode, save button in edit mode */}
+                    {/* Bottom control */}
                     {!isEditing ? (
                       <img
                         className="add"
                         src={plusIcon1}
                         alt="Open input"
                         onClick={handleOpenInput}
+                        draggable={false}
                       />
                     ) : (
                       <button
@@ -624,7 +844,7 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* Delete-card confirmation modal */}
+                    {/* Delete confirmation modal */}
                     {showDeleteConfirm && (
                       <div
                         className="modalBackdrop"
