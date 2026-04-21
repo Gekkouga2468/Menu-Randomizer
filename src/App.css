@@ -574,6 +574,140 @@ h1 {
 }
 
 /* =========================
+   Start / Randomize button
+   ========================= */
+
+.startButton {
+  position: fixed;
+  bottom: 2.5vw;
+  left: 50%;
+  z-index: 15;
+  transform: translateX(-50%);
+  padding: 0.6vw 2.5vw;
+  font: inherit;
+  font-size: 1vw;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: white;
+  background: black;
+  border: none;
+  border-radius: 2vw;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.startButton:hover {
+  background: #222;
+  transform: translateX(-50%) scale(1.05);
+}
+
+.startButton:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.resultBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.resultModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6vw;
+  padding: 0 0 1.5vw 0;
+  background: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  border-radius: 2vw;
+  font-family: "Times New Roman", Times, serif;
+  text-align: center;
+  overflow: hidden;
+  width: 20vw;
+}
+
+.resultModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6vw;
+  padding: 0 0 1.5vw 0;
+  background: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  border-radius: 2vw;
+  font-family: "Times New Roman", Times, serif;
+  text-align: center;
+  overflow: hidden;
+  width: 20vw;
+}
+
+.resultHeader {
+  width: 100%;
+  background: rgb(206, 206, 4);
+  padding: 0.8vw 1.2vw;
+  box-sizing: border-box;
+}
+
+.resultHeaderText {
+  margin: 0;
+  font-size: 1vw;
+  font-weight: bold;
+  color: black;
+  text-align: left;
+}
+
+.resultDish {
+  margin: 0.8vw 0 0.4vw 0;
+  font-size: 2.5vw;
+  font-weight: bold;
+  color: black;
+}
+
+.resultActions {
+  display: flex;
+  gap: 0.8vw;
+  margin-top: 0.4vw;
+}
+
+.resultDecline,
+.resultAccept {
+  padding: 0.5vw 1.8vw;
+  font: inherit;
+  font-size: 0.8vw;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.resultDecline {
+  color: rgb(255, 255, 255);
+  background: rgb(255, 0, 0);
+  font-weight: bold;
+  border-radius: 1vw;
+}
+
+.resultDecline:hover {
+  background: #e0e0e0;
+}
+
+.resultAccept {
+  color: white;
+  background: rgb(1, 185, 25);
+  border-radius: 1vw;
+  font-weight: bold;
+}
+
+.resultAccept:hover {
+  background: #333;
+}
+
+/* =========================
    Portrait mode
    ========================= */
 
@@ -830,5 +964,44 @@ h1 {
 
   .cancelBtn {
     border: 1px solid #ccc;
+  }
+
+  .startButton {
+    bottom: 2rem;
+    padding: 0.6rem 2rem;
+    font-size: clamp(1rem, 3.5vw, 1.15rem);
+    border-radius: 2rem;
+  }
+
+  .resultModal {
+    padding: 0 0 1.5rem 0;
+    border-width: 2px;
+    border-radius: 1.5rem;
+    width: min(85vw, 32rem);
+  }
+
+  .resultHeader {
+    padding: 0.8rem 1.2rem;
+  }
+
+  .resultHeaderText {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+  }
+
+  .resultDish {
+    margin: 1rem 0 0.5rem 0;
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
+  }
+
+  .resultActions {
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .resultDecline,
+  .resultAccept {
+    padding: 0.5rem 1.5rem;
+    font-size: clamp(0.9rem, 3vw, 1rem);
+    border-radius: 5vw;
   }
 }

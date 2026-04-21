@@ -138,6 +138,32 @@ export default function App() {
   // Controls the side menu banner
   const [isMenuClicked, setIsMenuClicked] = useState(false);
 
+  const [cycleIndex, setCycleIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cycle-index");
+      return saved ? JSON.parse(saved) : 0;
+    } catch (error) {
+      console.error("Failed to load cycle index from localStorage:", error);
+      return 0;
+    }
+  });
+
+  const [usedDishIds, setUsedDishIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem("used-dish-ids");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch (error) {
+      console.error("Failed to load used dish ids from localStorage:", error);
+      return new Set();
+    }
+  });
+
+  const [result, setResult] = useState(null);
+
+  const isSpinning = useRef(false);
+
+  const [isSpinningState, setIsSpinningState] = useState(false);
+
   /* =========================
      Derived values
      ========================= */
@@ -210,6 +236,22 @@ export default function App() {
     }
   }, [cards]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem("used-dish-ids", JSON.stringify([...usedDishIds]));
+    } catch (error) {
+      console.error("Failed to save used dish ids to localStorage:", error);
+    }
+  }, [usedDishIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("cycle-index", JSON.stringify(cycleIndex));
+    } catch (error) {
+      console.error("Failed to save cycle index to localStorage:", error);
+    }
+  }, [cycleIndex]);
+
   /*
     Keep cardCycle in sync with cards.
 
@@ -259,30 +301,32 @@ export default function App() {
     - leftover drag momentum
   */
   useEffect(() => {
-    if (selectedCard !== null || isMenuClicked) return;
+    if (
+      selectedCard !== null ||
+      isMenuClicked ||
+      isSpinningState ||
+      result !== null
+    )
+      return;
 
     let animationFrameId;
 
     const animate = () => {
       setRotation((prev) => {
         const next = prev + velocity.current + AUTO_SPIN_SPEED;
-
-        // Gradually reduce momentum after dragging
         velocity.current *= 0.95;
-
-        if (Math.abs(velocity.current) < 0.001) {
-          velocity.current = 0;
-        }
-
+        if (Math.abs(velocity.current) < 0.001) velocity.current = 0;
         return next;
       });
-
       animationFrameId = requestAnimationFrame(animate);
     };
 
     animationFrameId = requestAnimationFrame(animate);
-
     return () => cancelAnimationFrame(animationFrameId);
+  }, [selectedCard, isMenuClicked, isSpinningState, result]);
+
+  useEffect(() => {
+    if (selectedCard !== null || isMenuClicked || isSpinning.current) return;
   }, [selectedCard, isMenuClicked]);
 
   /* =========================
@@ -572,6 +616,115 @@ export default function App() {
     });
   };
 
+  const handleRandomize = () => {
+    if (cardCycle.length === 0 || isSpinning.current) return;
+
+    const currentCycleItem = cardCycle[cycleIndex % cardCycle.length];
+    const matchingCard = cards.find((card) => card.id === currentCycleItem.id);
+
+    if (!matchingCard || matchingCard.dishes.length === 0) {
+      console.log(`Category "${currentCycleItem.title}" has no dishes.`);
+      return;
+    }
+
+    const availableDishes = matchingCard.dishes.filter(
+      (dish) => !usedDishIds.has(dish.id),
+    );
+
+    if (availableDishes.length === 0) return;
+
+    const randomIndex = Math.floor(Math.random() * availableDishes.length);
+    const randomDish = availableDishes[randomIndex];
+
+    // Find what position this card sits at in the carousel (+2 because position 1 is the default tile)
+    const cardPositionIndex =
+      cards.findIndex((c) => c.id === matchingCard.id) + 2;
+
+    spinToCategory(cardPositionIndex, () => {
+      setResult({
+        category: currentCycleItem.title,
+        dish: randomDish.name,
+        dishId: randomDish.id,
+        cardId: matchingCard.id,
+        isLastDish: availableDishes.length === 1,
+      });
+    });
+
+    setCycleIndex((prev) => (prev + 1) % cardCycle.length);
+  };
+
+  const handleAccept = () => {
+    if (!result) return;
+
+    const matchingCard = cards.find((card) => card.id === result.cardId);
+    if (!matchingCard) return;
+
+    setUsedDishIds((prev) => {
+      if (result.isLastDish) {
+        const next = new Set(prev);
+        matchingCard.dishes.forEach((dish) => next.delete(dish.id));
+        return next;
+      }
+      return new Set([...prev, result.dishId]);
+    });
+
+    setResult(null);
+  };
+
+  const handleDecline = () => {
+    // Roll back the cycle index since the pick was rejected
+    setCycleIndex((prev) => (prev - 1 + cardCycle.length) % cardCycle.length);
+    setResult(null);
+  };
+
+  const spinToCategory = (targetCardIndex, onComplete) => {
+    isSpinning.current = true;
+    setIsSpinningState(true);
+    velocity.current = 0;
+
+    const SPIN_DURATION = 10000;
+    const FAST_PHASE = 0.2;
+    const SLOW_PHASE = 0.999;
+    const MAX_SPEED = 1.5;
+
+    const targetAngle = -(targetCardIndex - 1) * (360 / quantity);
+    const startTime = performance.now();
+    let startRotation = rotation;
+    const extraSpins = 3 * 360;
+
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / SPIN_DURATION, 1);
+
+      let newRotation;
+
+      if (t < FAST_PHASE) {
+        const localT = t / FAST_PHASE;
+        const speed = MAX_SPEED * localT;
+        newRotation = startRotation + speed * (elapsed / 16);
+      } else if (t < SLOW_PHASE) {
+        const localT = (t - FAST_PHASE) / (SLOW_PHASE - FAST_PHASE);
+        const eased = 1 - Math.pow(1 - localT, 3);
+        const totalTravel = extraSpins + (targetAngle - (startRotation % 360));
+        newRotation = startRotation + totalTravel * eased;
+      } else {
+        newRotation = targetAngle;
+      }
+
+      setRotation(newRotation);
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        isSpinning.current = false;
+        setIsSpinningState(false);
+        setRotation(targetAngle);
+        onComplete();
+      }
+    };
+
+    requestAnimationFrame(animate);
+  };
   /* =========================
      Render
      ========================= */
@@ -703,7 +856,16 @@ export default function App() {
                     onScroll={(e) => updateFade(e.currentTarget)}
                   >
                     {card.dishes.map((dish) => (
-                      <li key={dish.id}>{dish.name}</li>
+                      <li
+                        key={dish.id}
+                        style={
+                          usedDishIds.has(dish.id)
+                            ? { textDecoration: "line-through", opacity: 0.4 }
+                            : {}
+                        }
+                      >
+                        {dish.name}
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -882,6 +1044,30 @@ export default function App() {
           })}
         </div>
       </div>
+      {selectedCard === null && !isMenuClicked && (
+        <button className="startButton" onClick={handleRandomize}>
+          Start
+        </button>
+      )}
+
+      {result && (
+        <div className="resultBackdrop">
+          <div className="resultModal">
+            <div className="resultHeader">
+              <p className="resultHeaderText">The chosen dish is</p>
+            </div>
+            <h2 className="resultDish">{result.dish}</h2>
+            <div className="resultActions">
+              <button className="resultDecline" onClick={handleDecline}>
+                Decline
+              </button>
+              <button className="resultAccept" onClick={handleAccept}>
+                Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
