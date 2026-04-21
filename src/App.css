@@ -110,7 +110,11 @@ body {
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: nowrap; cursor: pointer;
+  }
+
+.banner .menuBanner .menuBannerItem:hover{
+  text-decoration: underline;
 }
 
 /* Drag handle icon */
@@ -355,6 +359,11 @@ h1 {
   -ms-overflow-style: none;
   scrollbar-width: none;
   scroll-behavior: smooth;
+}
+
+.banner .slider .card.active .dishList li:not([style*="line-through"]):hover {
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .banner .slider .card .dishList.activeList::-webkit-scrollbar {
@@ -686,26 +695,24 @@ h1 {
 }
 
 .resultDecline {
-  color: rgb(255, 255, 255);
-  background: rgb(255, 0, 0);
+  color:black;
+  background: white;
   font-weight: bold;
   border-radius: 1vw;
-}
-
-.resultDecline:hover {
-  background: #e0e0e0;
+  border: 0.08vw solid #ccc;
 }
 
 .resultAccept {
   color: white;
-  background: rgb(1, 185, 25);
+  background: black;
   border-radius: 1vw;
   font-weight: bold;
 }
 
-.resultAccept:hover {
-  background: #333;
+.resultAccept:hover, .resultDecline:hover{
+  transform: scale(1.1);
 }
+
 
 /* =========================
    Portrait mode

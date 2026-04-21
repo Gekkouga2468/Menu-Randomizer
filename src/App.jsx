@@ -6,6 +6,7 @@ import plusIcon1 from "./assets/plusicon1.png";
 import dots from "./assets/dots.png";
 import x from "./assets/x.png";
 import menu from "./assets/Menu.png";
+import menuBlack from "./assets/MenuBlack.png";
 
 import {
   DndContext,
@@ -33,7 +34,7 @@ import { CSS } from "@dnd-kit/utilities";
   The row itself is sortable through dnd-kit.
   The small menu icon on the right acts as the drag handle.
 */
-function SortableMenuRow({ item, icon }) {
+function SortableMenuRow({ item, icon, onSelect }) {
   const {
     attributes,
     listeners,
@@ -51,8 +52,9 @@ function SortableMenuRow({ item, icon }) {
 
   return (
     <div ref={setNodeRef} style={style} className="menuBannerRow">
-      <p className="menuBannerItem">{item.title}</p>
-
+      <p className="menuBannerItem" onClick={onSelect}>
+        {item.title}
+      </p>
       <img
         className="menuIcon dragHandle"
         src={icon}
@@ -138,6 +140,8 @@ export default function App() {
   // Controls the side menu banner
   const [isMenuClicked, setIsMenuClicked] = useState(false);
 
+  const [selectedDish, setSelectedDish] = useState(null);
+
   const [cycleIndex, setCycleIndex] = useState(() => {
     try {
       const saved = localStorage.getItem("cycle-index");
@@ -163,6 +167,8 @@ export default function App() {
   const isSpinning = useRef(false);
 
   const [isSpinningState, setIsSpinningState] = useState(false);
+
+  const [restoreDish, setRestoreDish] = useState(null);
 
   /* =========================
      Derived values
@@ -619,40 +625,50 @@ export default function App() {
   const handleRandomize = () => {
     if (cardCycle.length === 0 || isSpinning.current) return;
 
-    const currentCycleItem = cardCycle[cycleIndex % cardCycle.length];
-    const matchingCard = cards.find((card) => card.id === currentCycleItem.id);
+    // Find the next cycle item that has available dishes
+    let attempts = 0;
+    let searchIndex = cycleIndex % cardCycle.length;
 
-    if (!matchingCard || matchingCard.dishes.length === 0) {
-      console.log(`Category "${currentCycleItem.title}" has no dishes.`);
-      return;
+    while (attempts < cardCycle.length) {
+      const currentCycleItem = cardCycle[searchIndex];
+      const matchingCard = cards.find(
+        (card) => card.id === currentCycleItem.id,
+      );
+
+      const availableDishes =
+        matchingCard?.dishes.filter((dish) => !usedDishIds.has(dish.id)) ?? [];
+
+      if (availableDishes.length > 0) {
+        // Found a valid category, pick a random dish
+        const randomDish =
+          availableDishes[Math.floor(Math.random() * availableDishes.length)];
+        const cardPositionIndex =
+          cards.findIndex((c) => c.id === matchingCard.id) + 2;
+
+        // Advance cycle to just after the one we're using
+        setCycleIndex((searchIndex + 1) % cardCycle.length);
+
+        spinToCategory(cardPositionIndex, () => {
+          setResult({
+            category: currentCycleItem.title,
+            dish: randomDish.name,
+            dishId: randomDish.id,
+            cardId: matchingCard.id,
+            isLastDish: availableDishes.length === 1,
+          });
+        });
+
+        return;
+      }
+
+      // This category is empty or has no available dishes, skip it
+      searchIndex = (searchIndex + 1) % cardCycle.length;
+      attempts++;
     }
 
-    const availableDishes = matchingCard.dishes.filter(
-      (dish) => !usedDishIds.has(dish.id),
-    );
-
-    if (availableDishes.length === 0) return;
-
-    const randomIndex = Math.floor(Math.random() * availableDishes.length);
-    const randomDish = availableDishes[randomIndex];
-
-    // Find what position this card sits at in the carousel (+2 because position 1 is the default tile)
-    const cardPositionIndex =
-      cards.findIndex((c) => c.id === matchingCard.id) + 2;
-
-    spinToCategory(cardPositionIndex, () => {
-      setResult({
-        category: currentCycleItem.title,
-        dish: randomDish.name,
-        dishId: randomDish.id,
-        cardId: matchingCard.id,
-        isLastDish: availableDishes.length === 1,
-      });
-    });
-
-    setCycleIndex((prev) => (prev + 1) % cardCycle.length);
+    // Every category is exhausted
+    alert("All dishes have been used!");
   };
-
   const handleAccept = () => {
     if (!result) return;
 
@@ -759,7 +775,7 @@ export default function App() {
               setIsMenuClicked((prev) => !prev);
             }}
             draggable={false}
-            src={menu}
+            src={isMenuClicked ? menu : menuBlack}
             alt="Menu Icon"
           />
 
@@ -777,7 +793,19 @@ export default function App() {
                     strategy={verticalListSortingStrategy}
                   >
                     {cardCycle.map((item) => (
-                      <SortableMenuRow key={item.id} item={item} icon={menu} />
+                      <SortableMenuRow
+                        key={item.id}
+                        item={item}
+                        icon={menu}
+                        onSelect={() => {
+                          const cardIndex = cards.findIndex(
+                            (c) => c.id === item.id,
+                          );
+                          if (cardIndex === -1) return;
+                          handleSelectCard(cardIndex + 2, item.id);
+                          setIsMenuClicked(false);
+                        }}
+                      />
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -854,19 +882,34 @@ export default function App() {
                     }`}
                     ref={(el) => el && updateFade(el)}
                     onScroll={(e) => updateFade(e.currentTarget)}
+                    onClick={(e) => {
+                      if (isActive) e.stopPropagation();
+                    }}
                   >
-                    {card.dishes.map((dish) => (
-                      <li
-                        key={dish.id}
-                        style={
-                          usedDishIds.has(dish.id)
-                            ? { textDecoration: "line-through", opacity: 0.4 }
-                            : {}
-                        }
-                      >
-                        {dish.name}
-                      </li>
-                    ))}
+                    {card.dishes.map((dish) => {
+                      const isUsed = usedDishIds.has(dish.id);
+                      return (
+                        <li
+                          key={dish.id}
+                          style={
+                            isUsed
+                              ? { textDecoration: "line-through", opacity: 0.4 }
+                              : {}
+                          }
+                          onClick={(e) => {
+                            if (!isActive) return;
+                            e.stopPropagation();
+                            if (isUsed) {
+                              setRestoreDish({ id: dish.id, name: dish.name });
+                            } else {
+                              setSelectedDish({ id: dish.id, name: dish.name });
+                            }
+                          }}
+                        >
+                          {dish.name}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
 
@@ -887,7 +930,6 @@ export default function App() {
                               onChange={(e) =>
                                 handleEditDishChange(dish.id, e.target.value)
                               }
-                              placeholder="Dish name"
                             />
 
                             <img
@@ -1051,8 +1093,8 @@ export default function App() {
       )}
 
       {result && (
-        <div className="resultBackdrop">
-          <div className="resultModal">
+        <div className="resultBackdrop" onClick={handleDecline}>
+          <div className="resultModal" onClick={(e) => e.stopPropagation()}>
             <div className="resultHeader">
               <p className="resultHeaderText">The chosen dish is</p>
             </div>
@@ -1063,6 +1105,68 @@ export default function App() {
               </button>
               <button className="resultAccept" onClick={handleAccept}>
                 Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedDish && (
+        <div className="resultBackdrop" onClick={() => setSelectedDish(null)}>
+          <div className="resultModal" onClick={(e) => e.stopPropagation()}>
+            <div className="resultHeader">
+              <p className="resultHeaderText">
+                Do you want to choose this dish?
+              </p>
+            </div>
+            <h2 className="resultDish">{selectedDish.name}</h2>
+            <div className="resultActions">
+              <button
+                className="resultDecline"
+                onClick={() => setSelectedDish(null)}
+              >
+                No
+              </button>
+              <button
+                className="resultAccept"
+                onClick={() => {
+                  setUsedDishIds((prev) => new Set([...prev, selectedDish.id]));
+                  setSelectedDish(null);
+                }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {restoreDish && (
+        <div className="resultBackdrop" onClick={() => setRestoreDish(null)}>
+          <div className="resultModal" onClick={(e) => e.stopPropagation()}>
+            <div className="resultHeader">
+              <p className="resultHeaderText">Restore this dish?</p>
+            </div>
+            <h2 className="resultDish">{restoreDish.name}</h2>
+            <div className="resultActions">
+              <button
+                className="resultDecline"
+                onClick={() => setRestoreDish(null)}
+              >
+                No
+              </button>
+              <button
+                className="resultAccept"
+                onClick={() => {
+                  setUsedDishIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(restoreDish.id);
+                    return next;
+                  });
+                  setRestoreDish(null);
+                }}
+              >
+                Yes
               </button>
             </div>
           </div>
