@@ -7,6 +7,7 @@ import dots from "./assets/dots.png";
 import x from "./assets/x.png";
 import menu from "./assets/Menu.png";
 import menuBlack from "./assets/MenuBlack.png";
+import historyIcon from "./assets/history.png";
 
 import { arrayMove } from "@dnd-kit/sortable";
 import SideMenu from "./components/SideMenu";
@@ -16,6 +17,7 @@ import useLocalStorageState from "./hooks/useLocalStorageState";
 import useCarouselDrag from "./hooks/useCarouselDrag";
 import useRandomizer from "./hooks/useRandomizer";
 import useCardEditor from "./hooks/useCardEditor";
+import HistoryPanel from "./components/HistoryPanel";
 
 export default function App() {
   /* =========================
@@ -282,6 +284,13 @@ export default function App() {
     });
   };
 
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  const [historyItems, setHistoryItems] = useLocalStorageState(
+    "dish-history",
+    [],
+  );
+
   /* =========================
      Effects
      ========================= */
@@ -345,27 +354,43 @@ export default function App() {
   return (
     <div>
       <div className="banner">
-        {(selectedCard !== null || isMenuClicked) && (
+        {(selectedCard !== null || isMenuClicked || isHistoryOpen) && (
           <div
             className="overlay"
             onClick={() => {
               if (selectedCard !== null) closeCard();
               if (isMenuClicked) setIsMenuClicked(false);
+              if (isHistoryOpen) setIsHistoryOpen(false);
             }}
           />
         )}
 
-        <SideMenu
-          isMenuClicked={isMenuClicked}
-          setIsMenuClicked={setIsMenuClicked}
-          cards={cards}
-          cardCycle={cardCycle}
-          handleDragEnd={handleDragEnd}
-          velocity={velocity}
-          isDragging={isDragging}
-          menu={menu}
-          menuBlack={menuBlack}
-        />
+        <div class="topControl">
+          <SideMenu
+            isMenuClicked={isMenuClicked}
+            setIsMenuClicked={setIsMenuClicked}
+            cards={cards}
+            cardCycle={cardCycle}
+            handleDragEnd={handleDragEnd}
+            velocity={velocity}
+            isDragging={isDragging}
+            menu={menu}
+            menuBlack={menuBlack}
+          />
+
+          <HistoryPanel
+            isHistoryOpen={isHistoryOpen}
+            setIsHistoryOpen={setIsHistoryOpen}
+            isMenuClicked={isMenuClicked}
+            setIsMenuClicked={setIsMenuClicked}
+            selectedCard={selectedCard}
+            closeCard={closeCard}
+            velocity={velocity}
+            isDragging={isDragging}
+            historyItems={historyItems}
+            historyIcon={historyIcon}
+          />
+        </div>
 
         <Carousel
           cards={cards}
@@ -394,7 +419,13 @@ export default function App() {
           cancelText="Decline"
           confirmText="Accept"
           onCancel={handleDecline}
-          onConfirm={handleAccept}
+          onConfirm={() => {
+            addToHistory({
+              dishName: result.dish,
+              source: "random",
+            });
+            handleAccept();
+          }}
           actionsClassName="resultActions"
           cancelButtonClassName="resultDecline"
           confirmButtonClassName="resultAccept"
@@ -431,6 +462,11 @@ export default function App() {
               }
 
               return new Set([...prev, selectedDish.id]);
+            });
+
+            addToHistory({
+              dishName: selectedDish.name,
+              source: "manual",
             });
 
             setSelectedDish(null);

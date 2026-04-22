@@ -52,7 +52,7 @@ body {
    ========================= */
 
 /* Collapsed side menu */
-.banner .menuBanner {
+.banner .topControl .menuBanner {
   position: absolute;
   top: 0;
   right: 0;
@@ -63,7 +63,7 @@ body {
 }
 
 /* Expanded side menu */
-.banner .menuBanner.active {
+.banner .topControl .menuBanner.active {
   width: 14vw;
   z-index: 40;
   color: white;
@@ -72,7 +72,7 @@ body {
 }
 
 /* Top menu button */
-.banner .menuBanner > img {
+.banner .topControl .menuBanner > img {
   position: absolute;
   top: 1vw;
   left: 1vw;
@@ -81,14 +81,14 @@ body {
 }
 
 /* Scroll/content area inside menu */
-.banner .menuBanner .menuBannerContent {
+.banner .topControl .menuBanner .menuBannerContent {
   margin-top: 4.5vw;
   padding: 1vw;
   box-sizing: border-box;
 }
 
 /* One row per category in the menu */
-.banner .menuBanner .menuBannerRow {
+.banner .topControl .menuBanner .menuBannerRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,7 +101,7 @@ body {
 }
 
 /* Category title text */
-.banner .menuBanner .menuBannerItem {
+.banner .topControl .menuBanner .menuBannerItem {
   flex: 1;
   min-width: 0;
   margin: 0;
@@ -113,12 +113,12 @@ body {
   white-space: nowrap; cursor: pointer;
   }
 
-.banner .menuBanner .menuBannerItem:hover{
+.banner .topControl .menuBanner .menuBannerItem:hover{
   text-decoration: underline;
 }
 
 /* Drag handle icon */
-.banner .menuBanner .menuIcon {
+.banner .topControl .menuBanner .menuIcon {
   position: static;
   width: 1vw;
   height: auto;
@@ -128,12 +128,66 @@ body {
   -webkit-user-drag: none;
 }
 
-.banner .menuBanner .menuIcon:active {
+.banner .topControl .menuBanner .menuIcon:active {
   cursor: grabbing;
 }
 
 /* Optional visual state while dragging */
-.banner .menuBanner .menuBannerRow.dragging {
+.banner .topControl .menuBanner .menuBannerRow.dragging {
+  opacity: 0.7;
+}
+
+.historyBanner {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.historyBannerIcon{
+  position: absolute;
+  top: 2.5vw;
+  left: -1.5vw;
+  width: 2vw;
+  cursor: pointer;
+}
+
+.historyBannerContent {
+  margin-top: 12px;
+  width: 280px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.historyBannerRow {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.historyBannerRow:last-child {
+  border-bottom: none;
+}
+
+.historyDishName {
+  margin: 0;
+  font-weight: 600;
+}
+
+.historyDishMeta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.historyBannerEmpty {
+  margin: 0;
   opacity: 0.7;
 }
 
