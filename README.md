@@ -76,20 +76,6 @@ Run locally:
 ```bash
 npm run dev
 ```
-
----
-
-## 🏗 Build
-
-```bash
-npm run build
-```
-
-Preview production build:
-
-```bash
-npm run preview
-```
 ## 💡 How It Works
 
 * Categories are stored as **cards**
