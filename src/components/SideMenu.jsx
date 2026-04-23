@@ -24,6 +24,8 @@ export default function SideMenu({
   isDragging,
   menu,
   menuBlack,
+  skipAnimation,
+  setSkipAnimation,
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -57,33 +59,46 @@ export default function SideMenu({
       />
 
       {isMenuClicked && (
-        <div className="menuBannerContent">
-          {cards.length > 0 ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={cardCycle.map((item) => item.id)}
-                strategy={verticalListSortingStrategy}
+        <>
+          <div className="menuBannerToggle">
+            <label>
+              <input
+                type="checkbox"
+                checked={skipAnimation}
+                onChange={(e) => setSkipAnimation(e.target.checked)}
+              />
+              <span>Skip animation</span>
+            </label>
+          </div>
+
+          <div className="menuBannerContent">
+            {cards.length > 0 ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                {cardCycle.map((item) => (
-                  <SortableMenuRow
-                    key={item.id}
-                    item={item}
-                    icon={menu}
-                    cards={cards}
-                    handleSelectCard={handleSelectCard}
-                    setIsMenuClicked={setIsMenuClicked}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          ) : (
-            <p className="menuBannerItem empty">No categories yet</p>
-          )}
-        </div>
+                <SortableContext
+                  items={cardCycle.map((item) => item.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {cardCycle.map((item) => (
+                    <SortableMenuRow
+                      key={item.id}
+                      item={item}
+                      icon={menu}
+                      cards={cards}
+                      handleSelectCard={handleSelectCard}
+                      setIsMenuClicked={setIsMenuClicked}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            ) : (
+              <p className="menuBannerItem empty">No categories yet</p>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

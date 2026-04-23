@@ -11,6 +11,7 @@ export default function useRandomizer({
   rotation,
   setRotation,
   velocity,
+  skipAnimation,
 }) {
   const isSpinning = useRef(false);
   const [isSpinningState, setIsSpinningState] = useState(false);
@@ -83,10 +84,28 @@ export default function useRandomizer({
       if (availableDishes.length > 0) {
         const randomDish =
           availableDishes[Math.floor(Math.random() * availableDishes.length)];
+
         const cardPositionIndex =
           cards.findIndex((c) => c.id === matchingCard.id) + 2;
 
+        const targetAngle = -(cardPositionIndex - 1) * (360 / quantity);
+
         setCycleIndex((searchIndex + 1) % cardCycle.length);
+
+        if (skipAnimation) {
+          velocity.current = 0;
+          setRotation(targetAngle);
+
+          setResult({
+            category: currentCycleItem.title,
+            dish: randomDish.name,
+            dishId: randomDish.id,
+            cardId: matchingCard.id,
+            isLastDish: availableDishes.length === 1,
+          });
+
+          return;
+        }
 
         spinToCategory(cardPositionIndex, () => {
           setResult({

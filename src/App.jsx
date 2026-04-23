@@ -70,8 +70,9 @@ export default function App() {
   // Current rotation angle of the carousel.
   const [rotation, setRotation] = useState(0);
 
-  // Controls whether the left menu panel is open.
+  // Controls whether the left menu panel is open and skip option.
   const [isMenuClicked, setIsMenuClicked] = useState(false);
+  const [skipAnimation, setSkipAnimation] = useState(false);
 
   // Used when manually choosing a dish from a card.
   const [selectedDish, setSelectedDish] = useState(null);
@@ -189,6 +190,7 @@ export default function App() {
     rotation,
     setRotation,
     velocity,
+    skipAnimation,
   });
 
   /* ==================================================
@@ -523,6 +525,8 @@ export default function App() {
             isDragging={isDragging}
             menu={menu}
             menuBlack={menuBlack}
+            skipAnimation={skipAnimation}
+            setSkipAnimation={setSkipAnimation}
           />
 
           <HistoryPanel
