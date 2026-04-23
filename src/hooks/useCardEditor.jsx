@@ -9,7 +9,6 @@ export default function useCardEditor({
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [showMenu, setShowMenu] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDishes, setEditDishes] = useState([]);
@@ -18,7 +17,6 @@ export default function useCardEditor({
     setShowInput(false);
     setInputValue("");
     setShowMenu(false);
-    setShowDeleteConfirm(false);
     setIsEditing(false);
     setEditTitle("");
     setEditDishes([]);
@@ -118,8 +116,6 @@ export default function useCardEditor({
     setInputValue,
     showMenu,
     setShowMenu,
-    showDeleteConfirm,
-    setShowDeleteConfirm,
     isEditing,
     setIsEditing,
     editTitle,

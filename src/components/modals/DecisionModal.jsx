@@ -16,6 +16,7 @@ export default function DecisionModal({
   confirmButtonClassName = "doneBtn",
   headerClassName,
   headerTextClassName,
+  children,
 }) {
   return (
     <Modal
@@ -31,6 +32,7 @@ export default function DecisionModal({
 
       {title && <h2 className={titleClassName}>{title}</h2>}
       {message && <p>{message}</p>}
+      {children}
 
       <div className={actionsClassName}>
         <button className={cancelButtonClassName} onClick={onCancel}>

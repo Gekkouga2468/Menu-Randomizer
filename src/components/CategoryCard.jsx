@@ -11,8 +11,6 @@ export default function CategoryCard({
   editDishes,
   usedDishIds,
   showMenu,
-  showInput,
-  showDeleteConfirm,
   didDrag,
   x,
   dots,
@@ -26,13 +24,6 @@ export default function CategoryCard({
   onRequestDelete,
   onOpenInput,
   onSaveEdit,
-  onInputChange,
-  onInputKeyDown,
-  inputValue,
-  onDone,
-  onCloseInput,
-  onCloseDeleteConfirm,
-  onDeleteCard,
   onDishClick,
   updateFade,
 }) {
@@ -132,7 +123,7 @@ export default function CategoryCard({
               showMenu={showMenu}
               onToggleMenu={onToggleMenu}
               onStartEdit={onStartEdit}
-              onRequestDelete={onRequestDelete}
+              onRequestDelete={() => onRequestDelete(card)}
               dots={dots}
             />
           )}
@@ -155,49 +146,6 @@ export default function CategoryCard({
             >
               Save
             </button>
-          )}
-
-          {showInput && !isEditing && (
-            <Modal
-              onClose={onCloseInput}
-              backdropClassName="resultBackdrop"
-              contentClassName="addDishModal"
-            >
-              <div className="resultHeader">
-                <p className="resultHeaderText">Add dish</p>
-              </div>
-
-              <input
-                className="addDishInput"
-                type="text"
-                placeholder="Enter dish name"
-                value={inputValue}
-                onChange={(e) => onInputChange(e.target.value)}
-                onKeyDown={onInputKeyDown}
-                autoFocus
-              />
-
-              <div className="resultActions">
-                <button className="resultDecline" onClick={onCloseInput}>
-                  Cancel
-                </button>
-                <button className="resultAccept" onClick={onDone}>
-                  Done
-                </button>
-              </div>
-            </Modal>
-          )}
-          {showDeleteConfirm && (
-            <DecisionModal
-              headerText={null}
-              title="Delete category?"
-              message="Do you want to delete this entire card?"
-              cancelText="No"
-              confirmText="Yes"
-              onCancel={onCloseDeleteConfirm}
-              onConfirm={onDeleteCard}
-              contentClassName="modal confirmModal"
-            />
           )}
         </>
       )}

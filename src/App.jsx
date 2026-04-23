@@ -82,6 +82,9 @@ export default function App() {
     false,
   );
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState(null);
+
   /* =========================
      Visual helper
      ========================= */
@@ -110,8 +113,6 @@ export default function App() {
     setInputValue,
     showMenu,
     setShowMenu,
-    showDeleteConfirm,
-    setShowDeleteConfirm,
     isEditing,
     editTitle,
     setEditTitle,
@@ -166,16 +167,29 @@ export default function App() {
     resetUIState();
   };
 
+  const handleOpenDeleteConfirm = (card) => {
+    setCardToDelete(card);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleCloseDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    setCardToDelete(null);
+  };
+
   const handleDeleteCard = () => {
-    if (selectedCard === null) return;
+    if (!cardToDelete) return;
 
-    setCards((prevCards) =>
-      prevCards.filter((card) => card.id !== selectedCard),
-    );
+    setCards((prev) => prev.filter((card) => card.id !== cardToDelete.id));
 
-    setSelectedCard(null);
+    if (selectedCard === cardToDelete.id) {
+      setSelectedCard(null);
+    }
+
+    setShowMenu(false);
     resetUIState();
     velocity.current = 0;
+    handleCloseDeleteConfirm();
   };
 
   const {
@@ -245,9 +259,9 @@ export default function App() {
     onDeleteDish: handleDeleteDish,
     onToggleMenu: () => setShowMenu((prev) => !prev),
     onStartEdit: handleStartEdit,
-    onRequestDelete: () => {
+    onRequestDelete: (card) => {
       setShowMenu(false);
-      setShowDeleteConfirm(true);
+      handleOpenDeleteConfirm(card);
     },
     onOpenInput: handleOpenInput,
     onSaveEdit: handleSaveEdit,
@@ -467,6 +481,55 @@ export default function App() {
         </button>
       )}
 
+      {showInput && !isEditing && (
+        <DecisionModal
+          backdropClassName="resultBackdrop"
+          contentClassName="resultModal addDishModal"
+          headerClassName="resultHeader"
+          headerTextClassName="resultHeaderText"
+          headerText="Add dish"
+          cancelText="Cancel"
+          confirmText="Done"
+          onCancel={() => {
+            setInputValue("");
+            setShowInput(false);
+          }}
+          onConfirm={handleDone}
+          actionsClassName="resultActions"
+          cancelButtonClassName="resultDecline"
+          confirmButtonClassName="resultAccept"
+        >
+          <input
+            className="addDishInput"
+            type="text"
+            placeholder="Enter dish name"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoFocus
+          />
+        </DecisionModal>
+      )}
+
+      {showDeleteConfirm && (
+        <DecisionModal
+          backdropClassName="resultBackdrop"
+          contentClassName="resultModal deleteModal"
+          headerClassName="resultHeader"
+          headerTextClassName="resultHeaderText"
+          headerText="Delete category?"
+          title="Do you want to delete this entire card?"
+          titleClassName="resultDish"
+          cancelText="No"
+          confirmText="Yes"
+          onCancel={handleCloseDeleteConfirm}
+          onConfirm={handleDeleteCard}
+          actionsClassName="resultActions"
+          cancelButtonClassName="resultDecline"
+          confirmButtonClassName="resultAccept"
+        />
+      )}
+
       {result && (
         <DecisionModal
           backdropClassName="resultBackdrop"
@@ -577,12 +640,12 @@ export default function App() {
                 a new category.
               </p>
               <p>
-                <strong>🍽 Add dish</strong> — Open a card, tap the plus icon at
-                the bottom.
+                <strong>🍽 Add dish</strong> — Open a card, click the plus icon
+                at the bottom.
               </p>
               <p>
-                <strong>✏️ Edit / Delete</strong> — Open a card, tap the ⋯ menu
-                in the top right.
+                <strong>✏️ Edit / Delete</strong> — Open a card, click the menu
+                ⋮ in the top right.
               </p>
               <p>
                 <strong>🎲 Start</strong> — Press the Start button to randomly
@@ -593,12 +656,12 @@ export default function App() {
                 used. Decline skips it and tries again next time.
               </p>
               <p>
-                <strong>👆 Manual pick</strong> — Open a card and tap any dish
+                <strong>👆 Manual pick</strong> — Open a card and click any dish
                 to choose it directly.
               </p>
               <p>
-                <strong>↩️ Restore</strong> — Tap a crossed-out dish to restore
-                it to the pool.
+                <strong>↩️ Restore</strong> — Click a crossed-out dish to
+                restore it to the pool.
               </p>
               <p>
                 <strong>☰ Menu</strong> — Reorder categories to change the
