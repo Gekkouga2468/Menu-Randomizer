@@ -9,6 +9,7 @@ export default function HistoryPanel({
   isDragging,
   historyItems,
   historyIcon,
+  historyIconWhite,
 }) {
   const formatDateTime = (isoString) => {
     const date = new Date(isoString);
@@ -39,7 +40,7 @@ export default function HistoryPanel({
           setIsHistoryOpen((prev) => !prev);
         }}
         draggable={false}
-        src={historyIcon}
+        src={isHistoryOpen ? historyIconWhite : historyIcon}
         alt="History Icon"
         className="historyBannerIcon"
       />
@@ -49,10 +50,10 @@ export default function HistoryPanel({
           {historyItems.length > 0 ? (
             historyItems.map((item) => (
               <div key={item.id} className="historyBannerRow">
-                <p className="historyDishName">{item.dishName}</p>
                 <p className="historyDishMeta">
-                  {item.source} • {formatDateTime(item.chosenAt)}
+                  {formatDateTime(item.chosenAt)}
                 </p>
+                <p className="historyDishName">{item.dishName}</p>
               </div>
             ))
           ) : (

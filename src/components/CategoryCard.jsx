@@ -158,10 +158,17 @@ export default function CategoryCard({
           )}
 
           {showInput && !isEditing && (
-            <Modal onClose={onCloseInput}>
-              <h2>Add dish</h2>
+            <Modal
+              onClose={onCloseInput}
+              backdropClassName="resultBackdrop"
+              contentClassName="addDishModal"
+            >
+              <div className="resultHeader">
+                <p className="resultHeaderText">Add dish</p>
+              </div>
 
               <input
+                className="addDishInput"
                 type="text"
                 placeholder="Enter dish name"
                 value={inputValue}
@@ -170,18 +177,16 @@ export default function CategoryCard({
                 autoFocus
               />
 
-              <div className="modalActions">
-                <button className="cancelBtn" onClick={onCloseInput}>
+              <div className="resultActions">
+                <button className="resultDecline" onClick={onCloseInput}>
                   Cancel
                 </button>
-
-                <button className="doneBtn" onClick={onDone}>
+                <button className="resultAccept" onClick={onDone}>
                   Done
                 </button>
               </div>
             </Modal>
           )}
-
           {showDeleteConfirm && (
             <DecisionModal
               headerText={null}

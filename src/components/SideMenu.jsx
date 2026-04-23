@@ -19,6 +19,7 @@ export default function SideMenu({
   cards,
   cardCycle,
   handleDragEnd,
+  handleSelectCard,
   velocity,
   isDragging,
   menu,
@@ -68,7 +69,14 @@ export default function SideMenu({
                 strategy={verticalListSortingStrategy}
               >
                 {cardCycle.map((item) => (
-                  <SortableMenuRow key={item.id} item={item} icon={menu} />
+                  <SortableMenuRow
+                    key={item.id}
+                    item={item}
+                    icon={menu}
+                    cards={cards}
+                    handleSelectCard={handleSelectCard}
+                    setIsMenuClicked={setIsMenuClicked}
+                  />
                 ))}
               </SortableContext>
             </DndContext>

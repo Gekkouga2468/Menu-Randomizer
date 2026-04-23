@@ -8,6 +8,8 @@ import x from "./assets/x.png";
 import menu from "./assets/Menu.png";
 import menuBlack from "./assets/MenuBlack.png";
 import historyIcon from "./assets/history.png";
+import historyIconWhite from "./assets/historyWhite.png";
+import manual from "./assets/manual.png";
 
 import { arrayMove } from "@dnd-kit/sortable";
 import SideMenu from "./components/SideMenu";
@@ -72,6 +74,13 @@ export default function App() {
   );
 
   const [restoreDish, setRestoreDish] = useState(null);
+
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+
+  const [hasSeenHelp, setHasSeenHelp] = useLocalStorageState(
+    "has-seen-help",
+    false,
+  );
 
   /* =========================
      Visual helper
@@ -291,6 +300,27 @@ export default function App() {
     [],
   );
 
+  const addToHistory = ({ dishName, source }) => {
+    setHistoryItems((prev) =>
+      [
+        {
+          id: Date.now(),
+          dishName,
+          source,
+          chosenAt: new Date().toISOString(),
+        },
+        ...prev,
+      ].slice(0, 30),
+    );
+  };
+
+  useEffect(() => {
+    if (!hasSeenHelp) {
+      setIsHelpOpen(true);
+      setHasSeenHelp(true);
+    }
+  }, []);
+
   /* =========================
      Effects
      ========================= */
@@ -325,7 +355,9 @@ export default function App() {
   useEffect(() => {
     if (
       selectedCard !== null ||
+      isHistoryOpen ||
       isMenuClicked ||
+      isHelpOpen ||
       isSpinningState ||
       result !== null
     )
@@ -345,7 +377,14 @@ export default function App() {
 
     animationFrameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [selectedCard, isMenuClicked, isSpinningState, result]);
+  }, [
+    selectedCard,
+    isMenuClicked,
+    isHistoryOpen,
+    isHelpOpen,
+    isSpinningState,
+    result,
+  ]);
 
   /* =========================
      Render
@@ -354,24 +393,31 @@ export default function App() {
   return (
     <div>
       <div className="banner">
-        {(selectedCard !== null || isMenuClicked || isHistoryOpen) && (
+        {(selectedCard !== null ||
+          isMenuClicked ||
+          isHistoryOpen ||
+          isHelpOpen) && (
           <div
             className="overlay"
             onClick={() => {
               if (selectedCard !== null) closeCard();
               if (isMenuClicked) setIsMenuClicked(false);
               if (isHistoryOpen) setIsHistoryOpen(false);
+              if (isHelpOpen) setIsHelpOpen(false);
             }}
           />
         )}
 
-        <div class="topControl">
+        <div
+          className={`topControl ${selectedCard !== null ? "hiddenOnCardOpen" : ""}`}
+        >
           <SideMenu
             isMenuClicked={isMenuClicked}
             setIsMenuClicked={setIsMenuClicked}
             cards={cards}
             cardCycle={cardCycle}
             handleDragEnd={handleDragEnd}
+            handleSelectCard={handleSelectCard}
             velocity={velocity}
             isDragging={isDragging}
             menu={menu}
@@ -389,6 +435,20 @@ export default function App() {
             isDragging={isDragging}
             historyItems={historyItems}
             historyIcon={historyIcon}
+            historyIconWhite={historyIconWhite}
+          />
+
+          <img
+            className="helpButton"
+            onClick={(e) => {
+              e.stopPropagation();
+              velocity.current = 0;
+              isDragging.current = false;
+              setIsHelpOpen((prev) => !prev);
+            }}
+            draggable={false}
+            src={manual}
+            alt="Manual Icon"
           />
         </div>
 
@@ -501,6 +561,59 @@ export default function App() {
           cancelButtonClassName="resultDecline"
           confirmButtonClassName="resultAccept"
         />
+      )}
+
+      {isHelpOpen && (
+        <div className="resultBackdrop" onClick={() => setIsHelpOpen(false)}>
+          <div className="helpModal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="helpTitle">How to use</h2>
+            <div className="helpContent">
+              <p>
+                <strong>🎠 Carousel</strong> — Drag left or right to spin. Click
+                a card to open it.
+              </p>
+              <p>
+                <strong>➕ Add category</strong> — Click the plus card to create
+                a new category.
+              </p>
+              <p>
+                <strong>🍽 Add dish</strong> — Open a card, tap the plus icon at
+                the bottom.
+              </p>
+              <p>
+                <strong>✏️ Edit / Delete</strong> — Open a card, tap the ⋯ menu
+                in the top right.
+              </p>
+              <p>
+                <strong>🎲 Start</strong> — Press the Start button to randomly
+                pick a dish from the next category in the cycle.
+              </p>
+              <p>
+                <strong>✅ Accept / Decline</strong> — Accept marks the dish as
+                used. Decline skips it and tries again next time.
+              </p>
+              <p>
+                <strong>👆 Manual pick</strong> — Open a card and tap any dish
+                to choose it directly.
+              </p>
+              <p>
+                <strong>↩️ Restore</strong> — Tap a crossed-out dish to restore
+                it to the pool.
+              </p>
+              <p>
+                <strong>☰ Menu</strong> — Reorder categories to change the
+                randomization cycle.
+              </p>
+              <p>
+                <strong>🕐 History</strong> — View the last 30 dishes that were
+                chosen.
+              </p>
+            </div>
+            <button className="helpClose" onClick={() => setIsHelpOpen(false)}>
+              Got it
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

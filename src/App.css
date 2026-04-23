@@ -47,23 +47,39 @@ body {
   background: rgba(0, 0, 0, 0.45);
 }
 
+.banner .topControl {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 /* =========================
    Side menu banner
    ========================= */
 
 /* Collapsed side menu */
-.banner .topControl .menuBanner {
-  position: absolute;
-  top: 0;
-  right: 0;
+.banner .menuBanner {
+  position: relative; /* ← was absolute */
+  top: unset;
+  right: unset;
   width: 4vw;
-  height: 100%;
+  height: auto; /* ← was 100% */
   background: transparent;
-  transition: 0.75s ease;
+  transition:
+    width 0.75s ease,
+    background 0.75s ease;
 }
 
 /* Expanded side menu */
-.banner .topControl .menuBanner.active {
+.banner .menuBanner.active {
+  position: fixed; /* ← break out of the stack to cover full height */
+  top: 0;
+  right: 0;
+  height: 100%;
   width: 14vw;
   z-index: 40;
   color: white;
@@ -72,7 +88,7 @@ body {
 }
 
 /* Top menu button */
-.banner .topControl .menuBanner > img {
+.banner .menuBanner > img {
   position: absolute;
   top: 1vw;
   left: 1vw;
@@ -81,14 +97,14 @@ body {
 }
 
 /* Scroll/content area inside menu */
-.banner .topControl .menuBanner .menuBannerContent {
+.banner .menuBanner .menuBannerContent {
   margin-top: 4.5vw;
   padding: 1vw;
   box-sizing: border-box;
 }
 
 /* One row per category in the menu */
-.banner .topControl .menuBanner .menuBannerRow {
+.banner .menuBanner .menuBannerRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,7 +117,7 @@ body {
 }
 
 /* Category title text */
-.banner .topControl .menuBanner .menuBannerItem {
+.banner .menuBanner .menuBannerItem {
   flex: 1;
   min-width: 0;
   margin: 0;
@@ -110,15 +126,16 @@ body {
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap; cursor: pointer;
-  }
+  white-space: nowrap;
+  cursor: pointer;
+}
 
-.banner .topControl .menuBanner .menuBannerItem:hover{
+.banner .menuBanner .menuBannerItem:hover {
   text-decoration: underline;
 }
 
 /* Drag handle icon */
-.banner .topControl .menuBanner .menuIcon {
+.banner .menuBanner .menuIcon {
   position: static;
   width: 1vw;
   height: auto;
@@ -128,67 +145,105 @@ body {
   -webkit-user-drag: none;
 }
 
-.banner .topControl .menuBanner .menuIcon:active {
+.banner .menuBanner .menuIcon:active {
   cursor: grabbing;
 }
 
 /* Optional visual state while dragging */
-.banner .topControl .menuBanner .menuBannerRow.dragging {
+.banner .menuBanner .menuBannerRow.dragging {
   opacity: 0.7;
 }
 
-.historyBanner {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+.banner .historyBanner .historyBannerRow {
+  padding: 0.1vw 0.5vw 0.5vw 0.5vw;
+  margin: 1vw 0 1vw 0;
+  border: 0.08vw solid rgba(255, 255, 255, 0.14);
+  border-radius: 1vw;
+  background: rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
 }
 
-.historyBannerIcon{
+/* Scrollable history list */
+.banner .historyBanner.active .historyBannerContent {
   position: absolute;
-  top: 2.5vw;
-  left: -1.5vw;
+  top: 1vw;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1vw;
+  margin-top: 2.5vw;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.banner .historyBanner .historyBannerContent::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Truncate long dish names with ellipsis */
+.banner .historyBanner .historyDishName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: bold;
+  font-size: 1vw;
+  text-align: left;
+  margin: 0.2vw 0 0 0.8vw;
+}
+
+/* Also truncate the meta line just in case */
+.banner .historyBanner .historyDishMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  margin-bottom: 0;
+}
+
+.banner .historyBanner {
+  position: relative;
+  width: 4vw;
+  height: auto;
+  background: transparent;
+  transition:
+    width 0.75s ease,
+    background 0.75s ease;
+}
+
+.banner .historyBanner.active {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 14vw; /* match menu width, adjust as needed */
+  z-index: 40;
+  color: white;
+  background: rgb(45, 45, 45);
+  box-shadow: -0.3vw 0 1vw rgba(0, 0, 0, 0.12);
+}
+
+.banner .historyBanner .historyBannerIcon {
+  display: block;
+  padding: 1vw;
   width: 2vw;
   cursor: pointer;
+  position: absolute;
+  top: 4vw;
 }
 
-.historyBannerContent {
-  margin-top: 12px;
-  width: 280px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+.banner .historyBanner.active .historyBannerIcon {
+  top: 0vw;
 }
 
-.historyBannerRow {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.historyBannerRow:last-child {
-  border-bottom: none;
-}
-
-.historyDishName {
-  margin: 0;
-  font-weight: 600;
-}
-
-.historyDishMeta {
-  margin: 4px 0 0;
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-.historyBannerEmpty {
-  margin: 0;
-  opacity: 0.7;
+.banner .topControl .helpButton {
+  display: block;
+  padding: 1vw;
+  width: 2vw;
+  cursor: pointer;
+  position: absolute;
+  top: 8vw;
 }
 
 /* =========================
@@ -636,6 +691,32 @@ h1 {
   border: none;
 }
 
+.addDishModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1vw;
+  padding: 0 0 1.5vw 0;
+  background: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  border-radius: 2vw;
+  font-family: "Times New Roman", Times, serif;
+  text-align: center;
+  overflow: hidden;
+  width: 20vw;
+}
+
+.addDishInput {
+  width: 75%;
+  padding: 0.4vw 0.8vw;
+  font: inherit;
+  font-size: 0.8vw;
+  border: 0.08vw solid #ccc;
+  border-radius: 1vw;
+  outline: none;
+  box-sizing: border-box;
+}
+
 /* =========================
    Start / Randomize button
    ========================= */
@@ -695,21 +776,6 @@ h1 {
   width: 20vw;
 }
 
-.resultModal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6vw;
-  padding: 0 0 1.5vw 0;
-  background: rgb(241, 241, 241);
-  border: 3px solid rgb(206, 206, 4);
-  border-radius: 2vw;
-  font-family: "Times New Roman", Times, serif;
-  text-align: center;
-  overflow: hidden;
-  width: 20vw;
-}
-
 .resultHeader {
   width: 100%;
   background: rgb(206, 206, 4);
@@ -749,7 +815,7 @@ h1 {
 }
 
 .resultDecline {
-  color:black;
+  color: black;
   background: white;
   font-weight: bold;
   border-radius: 1vw;
@@ -763,10 +829,68 @@ h1 {
   font-weight: bold;
 }
 
-.resultAccept:hover, .resultDecline:hover{
+.resultAccept:hover,
+.resultDecline:hover {
   transform: scale(1.1);
 }
 
+.helpModal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+  width: 28vw;
+  max-height: 80vh;
+  padding: 1.5vw 2vw;
+  box-sizing: border-box;
+  background: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  border-radius: 2vw;
+  font-family: "Times New Roman", Times, serif;
+  overflow: hidden;
+}
+
+.helpTitle {
+  margin: 0 0 0.5vw 0;
+  font-size: 1.2vw;
+  font-weight: bold;
+  text-align: center;
+}
+
+.helpContent {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex: 1;
+}
+
+.helpContent::-webkit-scrollbar {
+  display: none;
+}
+
+.helpContent p {
+  margin: 0.5vw 0;
+  font-size: 0.8vw;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.helpClose {
+  align-self: center;
+  margin-top: 0.5vw;
+  padding: 0.4vw 2vw;
+  font: inherit;
+  font-size: 0.8vw;
+  font-weight: 600;
+  color: white;
+  background: black;
+  border: none;
+  border-radius: 1vw;
+  cursor: pointer;
+}
+
+.helpClose:hover {
+  background: #333;
+}
 
 /* =========================
    Portrait mode
@@ -779,6 +903,16 @@ h1 {
 
   .banner {
     height: 100dvh;
+  }
+
+  .banner .topControl {
+    gap: 0.4rem;
+    padding: 0.4rem;
+    box-sizing: border-box;
+  }
+
+  .banner .topControl.hiddenOnCardOpen {
+    display: none;
   }
 
   /* =========================
@@ -819,6 +953,62 @@ h1 {
     width: clamp(0.95rem, 3.8vw, 1.25rem);
     touch-action: none;
     -webkit-user-drag: none;
+  }
+
+  /* =========================
+     History banner
+     ========================= */
+
+  .banner .historyBanner {
+    width: 3.25rem;
+  }
+
+  .banner .historyBanner.active {
+    width: min(80vw, 20rem);
+  }
+
+  .banner .historyBanner .historyBannerIcon {
+    top: 2rem;
+    width: clamp(1.4rem, 5vw, 2rem);
+    padding: 0.9rem;
+  }
+
+  .banner .historyBanner.active .historyBannerIcon {
+    top: 0.9rem;
+  }
+
+  .banner .historyBanner.active .historyBannerContent {
+    top: 3.75rem;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.9rem;
+  }
+
+  .banner .historyBanner .historyBannerRow {
+    margin: 0.75rem 0;
+    padding: 0.45rem 0.7rem 0.7rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .banner .historyBanner .historyDishMeta {
+    margin: 0;
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    text-align: left;
+  }
+
+  .banner .historyBanner .historyDishName {
+    margin: 0.25rem 0 0 0.75rem;
+    font-size: clamp(1rem, 3.4vw, 1.15rem);
+    text-align: left;
+  }
+
+  .banner .topControl .helpButton {
+    top: 5rem;
+    width: clamp(1.4rem, 5vw, 2rem);
+    padding: 0.9rem;
   }
 
   /* =========================
@@ -1027,12 +1217,80 @@ h1 {
     border: 1px solid #ccc;
   }
 
+  .modalBackdrop {
+    padding: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .modal {
+    width: min(100%, 32rem);
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  .modal h2 {
+    margin: -0.2rem 0 0.6rem 0;
+    font-size: min(1.2rem, 5vw);
+  }
+
+  .modal input {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    font-size: min(1rem, 3.5vw);
+    border: 1px solid #ccc;
+    border-radius: 1rem;
+  }
+
+  .modalActions {
+    gap: 0.75rem;
+  }
+
+  .cancelBtn,
+  .doneBtn {
+    min-width: 15vw;
+    padding: 0.5rem;
+    font-size: clamp(0.95rem, 3.5vw, 1.05rem);
+    border-radius: 1rem;
+  }
+
+  .cancelBtn {
+    border: 1px solid #ccc;
+  }
+
+  .addDishModal {
+    width: min(85vw, 32rem);
+    padding: 0 0 1.5rem 0;
+    border-width: 2px;
+    border-radius: 1.5rem;
+    gap: 0.8rem;
+  }
+
+  .addDishInput {
+    width: 75%;
+    padding: 0.5rem 0.8rem;
+    font-size: clamp(0.95rem, 3vw, 1.05rem);
+    border-radius: 1rem;
+    margin: 0.2rem 0;
+    border: 0.08vw solid #ccc;
+    background: none;
+    outline: none;
+    font: inherit;
+  }
+
+  /* =========================
+     Start / Randomize button
+     ========================= */
+
   .startButton {
     bottom: 2rem;
     padding: 0.6rem 2rem;
     font-size: clamp(1rem, 3.5vw, 1.15rem);
     border-radius: 2rem;
   }
+
+  /* =========================
+     Result modal
+     ========================= */
 
   .resultModal {
     padding: 0 0 1.5rem 0;
@@ -1064,5 +1322,35 @@ h1 {
     padding: 0.5rem 1.5rem;
     font-size: clamp(0.9rem, 3vw, 1rem);
     border-radius: 5vw;
+  }
+
+  /* =========================
+     Help modal
+     ========================= */
+
+  .helpModal {
+    width: min(90vw, 32rem);
+    max-height: 80vh;
+    padding: 1.25rem 1.4rem;
+    border-width: 2px;
+    border-radius: 1.5rem;
+  }
+
+  .helpTitle {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.1rem, 4vw, 1.35rem);
+  }
+
+  .helpContent p {
+    margin: 0.7rem 0;
+    font-size: clamp(0.95rem, 3.3vw, 1.05rem);
+    line-height: 1.5;
+  }
+
+  .helpClose {
+    margin-top: 0.75rem;
+    padding: 0.55rem 1.8rem;
+    font-size: clamp(0.95rem, 3.4vw, 1.05rem);
+    border-radius: 1rem;
   }
 }
