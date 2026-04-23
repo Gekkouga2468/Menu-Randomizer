@@ -1,0 +1,57 @@
+.helpModal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+  width: 28vw;
+  max-height: 80vh;
+  padding: 1.5vw 2vw;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  border-radius: 2vw;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.helpTitle {
+  margin: 0 0 0.5vw 0;
+  font-size: 1.2vw;
+  font-weight: bold;
+  text-align: center;
+}
+
+.helpContent {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.helpContent::-webkit-scrollbar {
+  display: none;
+}
+
+.helpContent p {
+  margin: 0.5vw 0;
+  font-size: 0.8vw;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.helpClose {
+  align-self: center;
+  margin-top: 0.5vw;
+  padding: 0.4vw 2vw;
+  font: inherit;
+  font-size: 0.8vw;
+  font-weight: 600;
+  color: white;
+  background: black;
+  border: none;
+  border-radius: 1vw;
+  cursor: pointer;
+}
+
+.helpClose:hover {
+  background: #333;
+}

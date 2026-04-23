@@ -1,5 +1,14 @@
-import { useState, useEffect } from "react";
-import "./App.css";
+import { useEffect, useState } from "react";
+import "./styles/base.css";
+import "./styles/layout.css";
+import "./styles/carousel.css";
+import "./styles/sideMenu.css";
+import "./styles/historyPanel.css";
+import "./styles/modal.css";
+import "./styles/help.css";
+import "./styles/portrait.css";
+
+import { arrayMove } from "@dnd-kit/sortable";
 
 import plusIcon from "./assets/plusicon.png";
 import plusIcon1 from "./assets/plusicon1.png";
@@ -11,37 +20,36 @@ import historyIcon from "./assets/history.png";
 import historyIconWhite from "./assets/historyWhite.png";
 import manual from "./assets/manual.png";
 
-import { arrayMove } from "@dnd-kit/sortable";
 import SideMenu from "./components/SideMenu";
 import Carousel from "./components/Carousel";
+import HistoryPanel from "./components/HistoryPanel";
 import DecisionModal from "./components/modals/DecisionModal";
+
 import useLocalStorageState from "./hooks/useLocalStorageState";
 import useCarouselDrag from "./hooks/useCarouselDrag";
 import useRandomizer from "./hooks/useRandomizer";
 import useCardEditor from "./hooks/useCardEditor";
-import HistoryPanel from "./components/HistoryPanel";
 
 export default function App() {
-  /* =========================
-     Constants
-     ========================= */
-
-  const MAX = 10;
+  /* ==================================================
+     App constants
+     ================================================== */
+  const MAX_CARDS = 10;
   const STORAGE_KEY = "carousel-cards";
   const DEFAULT_TITLE = "New Category";
   const AUTO_SPIN_SPEED = 0.04;
   const DRAG_THRESHOLD = 6;
 
-  /* =========================
-     Main card state
-     ========================= */
+  /* ==================================================
+     Main data state
+     ================================================== */
 
+  // Main list of category cards shown in the carousel.
   const [cards, setCards] = useLocalStorageState(STORAGE_KEY, []);
 
   /*
-    cardCycle:
-    Separate ordering used only for the side menu / category cycle.
-    Reordering this does NOT change the order of cards in the carousel.
+    Separate category order used by the side menu / spin cycle.
+    This allows menu reordering without changing the actual carousel card order.
   */
   const [cardCycle, setCardCycle] = useState(() =>
     cards
@@ -52,18 +60,29 @@ export default function App() {
       .filter((item) => item.title !== ""),
   );
 
-  /* =========================
+  /* ==================================================
      UI state
-     ========================= */
+     ================================================== */
 
+  // Currently opened card in the carousel.
   const [selectedCard, setSelectedCard] = useState(null);
+
+  // Current rotation angle of the carousel.
   const [rotation, setRotation] = useState(0);
 
+  // Controls whether the left menu panel is open.
   const [isMenuClicked, setIsMenuClicked] = useState(false);
+
+  // Used when manually choosing a dish from a card.
   const [selectedDish, setSelectedDish] = useState(null);
 
+  // Tracks where the randomizer is in the category cycle.
   const [cycleIndex, setCycleIndex] = useLocalStorageState("cycle-index", 0);
 
+  /*
+    Stores dish IDs that have already been used.
+    Saved as an array in localStorage and restored as a Set.
+  */
   const [usedDishIds, setUsedDishIds] = useLocalStorageState(
     "used-dish-ids",
     new Set(),
@@ -73,38 +92,58 @@ export default function App() {
     },
   );
 
+  // Used when the user clicks a crossed-out dish and wants to restore it.
   const [restoreDish, setRestoreDish] = useState(null);
 
+  // Help / manual modal state.
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
+  // Prevents auto-opening the help modal more than once.
   const [hasSeenHelp, setHasSeenHelp] = useLocalStorageState(
     "has-seen-help",
     false,
   );
 
+  // Delete confirmation modal state.
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [cardToDelete, setCardToDelete] = useState(null);
 
-  /* =========================
-     Visual helper
-     ========================= */
+  // History panel state.
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  const updateFade = (el) => {
-    if (!el) return;
+  // Stores the last selected dishes.
+  const [historyItems, setHistoryItems] = useLocalStorageState(
+    "dish-history",
+    [],
+  );
 
-    const isOverflowing = el.scrollHeight > el.clientHeight;
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-
-    el.classList.toggle("fade", isOverflowing && !atBottom);
-  };
-
-  /* =========================
+  /* ==================================================
      Derived values
-     ========================= */
+     ================================================== */
 
+  // +1 accounts for the "add new card" slot in the carousel.
   const quantity = cards.length + 1;
 
+  // The full card object for the currently selected card.
   const activeCardData = cards.find((card) => card.id === selectedCard);
+
+  /* ==================================================
+     Custom hooks
+     ================================================== */
+
+  const {
+    isDragging,
+    velocity,
+    didDrag,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+  } = useCarouselDrag({
+    selectedCard,
+    isMenuClicked,
+    setRotation,
+    dragThreshold: DRAG_THRESHOLD,
+  });
 
   const {
     showInput,
@@ -132,12 +171,50 @@ export default function App() {
     defaultTitle: DEFAULT_TITLE,
   });
 
-  /* =========================
-     Card actions
-     ========================= */
+  const {
+    isSpinning,
+    isSpinningState,
+    result,
+    handleRandomize,
+    handleAccept,
+    handleDecline,
+  } = useRandomizer({
+    cards,
+    cardCycle,
+    cycleIndex,
+    setCycleIndex,
+    usedDishIds,
+    setUsedDishIds,
+    quantity,
+    rotation,
+    setRotation,
+    velocity,
+  });
 
+  /* ==================================================
+     UI helpers
+     ================================================== */
+
+  /*
+    Adds or removes the "fade" class on scrollable dish lists.
+    This gives a visual hint when content overflows.
+  */
+  const updateFade = (el) => {
+    if (!el) return;
+
+    const isOverflowing = el.scrollHeight > el.clientHeight;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+
+    el.classList.toggle("fade", isOverflowing && !atBottom);
+  };
+
+  /* ==================================================
+     Card / category actions
+     ================================================== */
+
+  // Creates a new empty category card.
   const newCard = () => {
-    if (cards.length >= MAX) {
+    if (cards.length >= MAX_CARDS) {
       alert("Maximum number of category reached");
       return;
     }
@@ -152,6 +229,10 @@ export default function App() {
     ]);
   };
 
+  /*
+    Rotates the carousel so the chosen card comes to the front,
+    then opens that card.
+  */
   const handleSelectCard = (position, id) => {
     const angle = (position - 1) * (360 / quantity);
 
@@ -159,13 +240,19 @@ export default function App() {
     setSelectedCard(id);
     resetUIState();
 
+    // Stop any leftover movement when a card is opened.
     velocity.current = 0;
   };
 
+  // Closes the currently opened card and clears edit/input state.
   const closeCard = () => {
     setSelectedCard(null);
     resetUIState();
   };
+
+  /* ==================================================
+     Delete flow
+     ================================================== */
 
   const handleOpenDeleteConfirm = (card) => {
     setCardToDelete(card);
@@ -192,39 +279,47 @@ export default function App() {
     handleCloseDeleteConfirm();
   };
 
-  const {
-    isDragging,
-    velocity,
-    didDrag,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-  } = useCarouselDrag({
-    selectedCard,
-    isMenuClicked,
-    setRotation,
-    dragThreshold: DRAG_THRESHOLD,
-  });
+  /* ==================================================
+     Side menu reorder
+     ================================================== */
 
-  const {
-    isSpinning,
-    isSpinningState,
-    result,
-    handleRandomize,
-    handleAccept,
-    handleDecline,
-  } = useRandomizer({
-    cards,
-    cardCycle,
-    cycleIndex,
-    setCycleIndex,
-    usedDishIds,
-    setUsedDishIds,
-    quantity,
-    rotation,
-    setRotation,
-    velocity,
-  });
+  // Reorders the side menu category cycle using drag-and-drop.
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    setCardCycle((prevCycle) => {
+      const oldIndex = prevCycle.findIndex((item) => item.id === active.id);
+      const newIndex = prevCycle.findIndex((item) => item.id === over.id);
+
+      return arrayMove(prevCycle, oldIndex, newIndex);
+    });
+  };
+
+  /* ==================================================
+     History helpers
+     ================================================== */
+
+  // Saves accepted/manual dish selections, newest first, max 30 items.
+  const addToHistory = ({ dishName, source }) => {
+    setHistoryItems((prev) =>
+      [
+        {
+          id: Date.now(),
+          dishName,
+          source,
+          chosenAt: new Date().toISOString(),
+        },
+        ...prev,
+      ].slice(0, 30),
+    );
+  };
+
+  /* ==================================================
+     Grouped props passed into Carousel
+     Keeps the JSX cleaner.
+     ================================================== */
 
   const carouselState = {
     selectedCard,
@@ -269,76 +364,53 @@ export default function App() {
     onInputKeyDown: handleKeyDown,
     onDone: handleDone,
     onCloseInput: () => setShowInput(false),
-    onCloseDeleteConfirm: () => setShowDeleteConfirm(false),
+    onCloseDeleteConfirm: handleCloseDeleteConfirm,
     onDeleteCard: handleDeleteCard,
+
+    /*
+      Clicking a dish has two meanings:
+      - if already used -> offer restore
+      - if still available -> offer manual selection
+    */
     onDishClick: (dish, isUsed, card) => {
       if (isUsed) {
         setRestoreDish({ id: dish.id, name: dish.name });
-      } else {
-        const availableDishes = card.dishes.filter(
-          (item) => !usedDishIds.has(item.id),
-        );
-
-        setSelectedDish({
-          id: dish.id,
-          name: dish.name,
-          cardId: card.id,
-          isLastDish: availableDishes.length === 1,
-        });
+        return;
       }
+
+      const availableDishes = card.dishes.filter(
+        (item) => !usedDishIds.has(item.id),
+      );
+
+      setSelectedDish({
+        id: dish.id,
+        name: dish.name,
+        cardId: card.id,
+        isLastDish: availableDishes.length === 1,
+      });
     },
+
     updateFade,
   };
 
-  /* =========================
-     Menu reorder actions
-     ========================= */
+  /* ==================================================
+     Effects
+     ================================================== */
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) return;
-
-    setCardCycle((prevCycle) => {
-      const oldIndex = prevCycle.findIndex((item) => item.id === active.id);
-      const newIndex = prevCycle.findIndex((item) => item.id === over.id);
-
-      return arrayMove(prevCycle, oldIndex, newIndex);
-    });
-  };
-
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
-  const [historyItems, setHistoryItems] = useLocalStorageState(
-    "dish-history",
-    [],
-  );
-
-  const addToHistory = ({ dishName, source }) => {
-    setHistoryItems((prev) =>
-      [
-        {
-          id: Date.now(),
-          dishName,
-          source,
-          chosenAt: new Date().toISOString(),
-        },
-        ...prev,
-      ].slice(0, 30),
-    );
-  };
-
+  // Show the help modal automatically the first time the app is opened.
   useEffect(() => {
     if (!hasSeenHelp) {
       setIsHelpOpen(true);
       setHasSeenHelp(true);
     }
-  }, []);
+  }, [hasSeenHelp, setHasSeenHelp]);
 
-  /* =========================
-     Effects
-     ========================= */
-
+  /*
+    Keep the side-menu cycle in sync with cards:
+    - remove deleted cards
+    - update renamed titles
+    - append newly created cards
+  */
   useEffect(() => {
     setCardCycle((prevCycle) => {
       const prevIds = new Set(prevCycle.map((item) => item.id));
@@ -366,6 +438,10 @@ export default function App() {
     });
   }, [cards]);
 
+  /*
+    Idle carousel animation:
+    rotates slowly when the user is not interacting with the UI.
+  */
   useEffect(() => {
     if (
       selectedCard !== null ||
@@ -374,35 +450,44 @@ export default function App() {
       isHelpOpen ||
       isSpinningState ||
       result !== null
-    )
+    ) {
       return;
+    }
 
     let animationFrameId;
 
     const animate = () => {
       setRotation((prev) => {
         const next = prev + velocity.current + AUTO_SPIN_SPEED;
+
+        // Gradually reduce drag momentum over time.
         velocity.current *= 0.95;
-        if (Math.abs(velocity.current) < 0.001) velocity.current = 0;
+        if (Math.abs(velocity.current) < 0.001) {
+          velocity.current = 0;
+        }
+
         return next;
       });
+
       animationFrameId = requestAnimationFrame(animate);
     };
 
     animationFrameId = requestAnimationFrame(animate);
+
     return () => cancelAnimationFrame(animationFrameId);
   }, [
     selectedCard,
-    isMenuClicked,
     isHistoryOpen,
+    isMenuClicked,
     isHelpOpen,
     isSpinningState,
     result,
+    velocity,
   ]);
 
-  /* =========================
+  /* ==================================================
      Render
-     ========================= */
+     ================================================== */
 
   return (
     <div>
@@ -423,7 +508,9 @@ export default function App() {
         )}
 
         <div
-          className={`topControl ${selectedCard !== null ? "hiddenOnCardOpen" : ""}`}
+          className={`topControl ${
+            selectedCard !== null ? "hiddenOnCardOpen" : ""
+          }`}
         >
           <SideMenu
             isMenuClicked={isMenuClicked}
@@ -630,6 +717,7 @@ export default function App() {
         <div className="resultBackdrop" onClick={() => setIsHelpOpen(false)}>
           <div className="helpModal" onClick={(e) => e.stopPropagation()}>
             <h2 className="helpTitle">How to use</h2>
+
             <div className="helpContent">
               <p>
                 <strong>🎠 Carousel</strong> — Drag left or right to spin. Click
@@ -672,6 +760,7 @@ export default function App() {
                 chosen.
               </p>
             </div>
+
             <button className="helpClose" onClick={() => setIsHelpOpen(false)}>
               Got it
             </button>

@@ -1,0 +1,424 @@
+@media (orientation: portrait) {
+  /* ----------------------------------
+     Main stage
+     ---------------------------------- */
+
+  .banner {
+    height: 100dvh;
+  }
+
+  .banner .topControl {
+    gap: 0.4rem;
+    padding: 0.4rem;
+    box-sizing: border-box;
+  }
+
+  .banner .topControl.hiddenOnCardOpen {
+    display: none;
+  }
+
+  .banner .topControl .helpButton {
+    top: 5rem;
+    width: clamp(1.4rem, 5vw, 2rem);
+    padding: 0.9rem;
+  }
+
+  /* ----------------------------------
+     Side menu
+     ---------------------------------- */
+
+  .banner .menuBanner {
+    width: 3.25rem;
+  }
+
+  .banner .menuBanner.active {
+    width: min(80vw, 20rem);
+  }
+
+  .banner .menuBanner > img {
+    top: 0.9rem;
+    left: 0.9rem;
+    width: clamp(1.4rem, 5vw, 2rem);
+  }
+
+  .banner .menuBanner .menuBannerContent {
+    margin-top: 3.75rem;
+    padding: 0.9rem;
+  }
+
+  .banner .menuBanner .menuBannerRow {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border-width: 1px;
+    border-radius: 1rem;
+  }
+
+  .banner .menuBanner .menuBannerItem {
+    font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+  }
+
+  .banner .menuBanner .menuIcon {
+    width: clamp(0.95rem, 3.8vw, 1.25rem);
+    touch-action: none;
+    -webkit-user-drag: none;
+  }
+
+  /* ----------------------------------
+     History panel
+     ---------------------------------- */
+
+  .banner .historyBanner {
+    width: 3.25rem;
+  }
+
+  .banner .historyBanner.active {
+    width: min(80vw, 20rem);
+  }
+
+  .banner .historyBanner .historyBannerIcon {
+    top: 2rem;
+    width: clamp(1.4rem, 5vw, 2rem);
+    padding: 0.9rem;
+  }
+
+  .banner .historyBanner.active .historyBannerIcon {
+    top: 0.9rem;
+  }
+
+  .banner .historyBanner.active .historyBannerContent {
+    top: 3.75rem;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.9rem;
+  }
+
+  .banner .historyBanner .historyBannerRow {
+    margin: 0.75rem 0;
+    padding: 0.45rem 0.7rem 0.7rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .banner .historyBanner .historyDishMeta {
+    margin: 0;
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    text-align: left;
+  }
+
+  .banner .historyBanner .historyDishName {
+    margin: 0.25rem 0 0 0.75rem;
+    font-size: clamp(1rem, 3.4vw, 1.15rem);
+    text-align: left;
+  }
+
+  /* ----------------------------------
+     Carousel
+     ---------------------------------- */
+
+  .banner .slider {
+    width: min(45vw, 15rem);
+    height: auto;
+    aspect-ratio: 3 / 5;
+  }
+
+  .banner .slider .card {
+    transform: rotateY(
+        calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
+      )
+      translateZ(calc(var(--quantity) * 6.5vw + 5rem));
+  }
+
+  .banner .slider .card.active {
+    transform: rotateY(
+        calc((var(--position) - 1) * (360 / var(--quantity)) * 1deg)
+      )
+      translateZ(calc(var(--quantity) * 6vw + 6rem)) scale(1.1);
+  }
+
+  .banner .slider .card::before,
+  .banner .slider .card::after {
+    inset: 0.85rem;
+    border-width: 2px;
+  }
+
+  /* ----------------------------------
+     Card title
+     ---------------------------------- */
+
+  h1 {
+    width: 72%;
+    margin: 1rem auto 0 auto;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+  }
+
+  .editTitleInput {
+    width: 72%;
+    padding-top: 1rem;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    border-radius: 1rem;
+  }
+
+  /* ----------------------------------
+     Bottom controls
+     ---------------------------------- */
+
+  .banner .slider .card.active .add {
+    bottom: 1rem;
+    width: clamp(2rem, 8vw, 3rem);
+  }
+
+  .saveButton {
+    bottom: 1.2rem;
+    width: 30%;
+    padding: 0.3rem;
+    font-size: min(3vw, 0.7rem);
+    border-radius: 1rem;
+  }
+
+  /* ----------------------------------
+     Dish list - normal mode
+     ---------------------------------- */
+
+  .banner .slider .card .dishList {
+    top: 4.8rem;
+    width: 78%;
+    padding-left: 1.1em;
+    font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+  }
+
+  .banner .slider .card .dishList li {
+    margin: 1vw;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .banner .slider .card .dishList.previewList {
+    top: 2.5rem;
+    max-height: 75%;
+    font-size: clamp(0.9rem, 3vw, 1.05rem);
+  }
+
+  .banner .slider .card .dishList.activeList {
+    top: 2.5rem;
+    max-height: 75%;
+    padding-right: 0.5rem;
+    font-size: clamp(0.9rem, 3vw, 1.05rem);
+  }
+
+  /* ----------------------------------
+     Dish list - edit mode
+     ---------------------------------- */
+
+  .editDishList {
+    top: 2.5rem;
+    width: 75%;
+    max-height: 70%;
+    padding-right: 0;
+    box-sizing: border-box;
+  }
+
+  .editDishRow {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .inputWrapper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .editDishInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.4rem;
+    font-size: clamp(0.95rem, 3vw, 1.05rem);
+    border: 1px solid #ccc;
+    border-radius: 1.25rem;
+  }
+
+  .emptyEditText {
+    font-size: clamp(0.95rem, 3vw, 1.05rem);
+  }
+
+  .deleteDishIcon {
+    right: 0.6rem;
+    width: clamp(1rem, 4.8vw, 1.5rem);
+  }
+
+  /* ----------------------------------
+     Active card menu
+     ---------------------------------- */
+
+  .banner .slider .card.active .menuButton {
+    top: 0.2rem;
+    right: -0.2rem;
+  }
+
+  .banner .slider .card.active .menuButton img {
+    width: clamp(1rem, 3.8vw, 1.4rem);
+  }
+
+  .banner .slider .card.active .cardMenu {
+    top: 1rem;
+    right: 0.1rem;
+    min-width: 6.5rem;
+    border: 1px solid #d9d9d9;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+  }
+
+  .banner .slider .card.active .cardMenu .menuItem {
+    padding: 0.7rem 1rem;
+    font-size: clamp(0.9rem, 3vw, 1rem);
+  }
+
+  /* ----------------------------------
+     Generic modal
+     ---------------------------------- */
+
+  .modalBackdrop {
+    padding: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .modal {
+    width: min(100%, 32rem);
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  .modal h2 {
+    margin: -0.2rem 0 0.6rem 0;
+    font-size: min(1.2rem, 5vw);
+  }
+
+  .modal input {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    font-size: min(1rem, 3.5vw);
+    border: 1px solid #ccc;
+    border-radius: 1rem;
+  }
+
+  .modalActions {
+    gap: 0.75rem;
+  }
+
+  .cancelBtn,
+  .doneBtn {
+    min-width: 15vw;
+    padding: 0.5rem;
+    font-size: clamp(0.95rem, 3.5vw, 1.05rem);
+    border-radius: 1rem;
+  }
+
+  .cancelBtn {
+    border: 1px solid #ccc;
+  }
+
+  .addDishModal {
+    width: min(85vw, 32rem);
+    padding: 0 0 1.5rem 0;
+    gap: 0.8rem;
+    border-width: 2px;
+    border-radius: 1.5rem;
+  }
+
+  .addDishInput {
+    width: 75%;
+    margin: 0.2rem 0;
+    padding: 0.5rem 0.8rem;
+    font: inherit;
+    font-size: clamp(0.95rem, 3vw, 1.05rem);
+    border: 0.08vw solid #ccc;
+    border-radius: 1rem;
+    outline: none;
+    background: none;
+  }
+
+  /* ----------------------------------
+     Start button
+     ---------------------------------- */
+
+  .startButton {
+    bottom: 2rem;
+    padding: 0.6rem 2rem;
+    font-size: clamp(1rem, 3.5vw, 1.15rem);
+    border-radius: 2rem;
+  }
+
+  /* ----------------------------------
+     Result modal
+     ---------------------------------- */
+
+  .resultModal {
+    width: min(85vw, 32rem);
+    padding: 0 0 1.5rem 0;
+    border-width: 2px;
+    border-radius: 1.5rem;
+  }
+
+  .resultHeader {
+    padding: 0.8rem 1.2rem;
+  }
+
+  .resultHeaderText {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+  }
+
+  .resultDish {
+    margin: 1rem 0 0.5rem 0;
+    font-size: clamp(1.5rem, 6vw, 2.2rem);
+  }
+
+  .resultActions {
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .resultDecline,
+  .resultAccept {
+    padding: 0.5rem 1.5rem;
+    font-size: clamp(0.9rem, 3vw, 1rem);
+    border-radius: 5vw;
+  }
+
+  .deleteModal .resultDish {
+    font-size: 1rem;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  /* ----------------------------------
+     Help modal
+     ---------------------------------- */
+
+  .helpModal {
+    width: min(90vw, 32rem);
+    max-height: 80vh;
+    padding: 1.25rem 1.4rem;
+    border-width: 2px;
+    border-radius: 1.5rem;
+  }
+
+  .helpTitle {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.1rem, 4vw, 1.35rem);
+  }
+
+  .helpContent p {
+    margin: 0.7rem 0;
+    font-size: clamp(0.95rem, 3.3vw, 1.05rem);
+    line-height: 1.5;
+  }
+
+  .helpClose {
+    margin-top: 0.75rem;
+    padding: 0.55rem 1.8rem;
+    font-size: clamp(0.95rem, 3.4vw, 1.05rem);
+    border-radius: 1rem;
+  }
+}

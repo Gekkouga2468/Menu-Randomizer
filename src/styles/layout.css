@@ -1,0 +1,66 @@
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  text-align: center;
+}
+
+.banner .overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.banner .topControl {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.banner .topControl .helpButton {
+  position: absolute;
+  top: 8vw;
+  display: block;
+  width: 2vw;
+  padding: 1vw;
+  cursor: pointer;
+}
+
+.startButton {
+  position: fixed;
+  left: 50%;
+  bottom: 2.5vw;
+  z-index: 15;
+  padding: 0.6vw 2.5vw;
+  transform: translateX(-50%);
+  font: inherit;
+  font-size: 1vw;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: white;
+  background: black;
+  border: none;
+  border-radius: 2vw;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.startButton:hover {
+  background: #222;
+  transform: translateX(-50%) scale(1.05);
+}
+
+.startButton:active {
+  transform: translateX(-50%) scale(0.97);
+}

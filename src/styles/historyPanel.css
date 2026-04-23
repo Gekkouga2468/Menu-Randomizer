@@ -1,0 +1,86 @@
+/* Compact history panel state */
+.banner .historyBanner {
+  position: relative;
+  width: 4vw;
+  height: auto;
+  background: transparent;
+  transition:
+    width 0.75s ease,
+    background 0.75s ease;
+}
+
+/* Expanded history panel */
+.banner .historyBanner.active {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  width: 14vw;
+  height: 100%;
+  color: white;
+  background: rgb(45, 45, 45);
+  box-shadow: -0.3vw 0 1vw rgba(0, 0, 0, 0.12);
+}
+
+/* History toggle icon */
+.banner .historyBanner .historyBannerIcon {
+  position: absolute;
+  top: 4vw;
+  display: block;
+  width: 2vw;
+  padding: 1vw;
+  cursor: pointer;
+}
+
+.banner .historyBanner.active .historyBannerIcon {
+  top: 0;
+}
+
+/* Scrollable history content */
+.banner .historyBanner.active .historyBannerContent {
+  position: absolute;
+  top: 1vw;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 2.5vw;
+  padding: 1vw;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.banner .historyBanner .historyBannerContent::-webkit-scrollbar {
+  display: none;
+}
+
+/* One history entry */
+.banner .historyBanner .historyBannerRow {
+  margin: 1vw 0;
+  padding: 0.1vw 0.5vw 0.5vw 0.5vw;
+  box-sizing: border-box;
+  border: 0.08vw solid rgba(255, 255, 255, 0.14);
+  border-radius: 1vw;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Dish name line */
+.banner .historyBanner .historyDishName {
+  margin: 0.2vw 0 0 0.8vw;
+  font-size: 1vw;
+  font-weight: bold;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Secondary metadata line */
+.banner .historyBanner .historyDishMeta {
+  margin-bottom: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,172 @@
+/* Shared dark backdrop behind popups */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Generic modal box */
+.modal {
+  width: 100%;
+  padding: 1vw;
+  box-sizing: border-box;
+  background: white;
+  border-radius: 1vw;
+}
+
+.modal h2 {
+  margin: -0.4vw 0 0.2vw 0;
+  font-size: 0.8vw;
+  text-align: left;
+}
+
+.modal input {
+  width: 100%;
+  margin-bottom: 0.5vw;
+  padding: 0.25vw;
+  box-sizing: border-box;
+  font-size: 0.7vw;
+  border: 0.1vw solid #ccc;
+  border-radius: 1vw;
+  outline: none;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5vw;
+}
+
+.cancelBtn,
+.doneBtn {
+  min-width: 3vw;
+  padding: 0.4vw;
+  font-size: 0.65vw;
+  border-radius: 1vw;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  background: white;
+  border: 0.05vw solid #ccc;
+}
+
+.doneBtn {
+  color: white;
+  background: black;
+  border: none;
+}
+
+/* Add-dish text input inside modal */
+.addDishInput {
+  width: 75%;
+  padding: 0.4vw 0.8vw;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.8vw;
+  border: 0.08vw solid #ccc;
+  border-radius: 1vw;
+  outline: none;
+}
+
+/* ==================================================
+   Result / decision modals
+   ================================================== */
+
+.resultBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.resultModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6vw;
+  width: 20vw;
+  padding: 0 0 1.5vw 0;
+  overflow: hidden;
+  text-align: center;
+  background: rgb(241, 241, 241);
+  border: 3px solid rgb(206, 206, 4);
+  border-radius: 2vw;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.resultHeader {
+  width: 100%;
+  padding: 0.8vw 1.2vw;
+  box-sizing: border-box;
+  background: rgb(206, 206, 4);
+}
+
+.resultHeaderText {
+  margin: 0;
+  font-size: 1vw;
+  font-weight: bold;
+  color: black;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resultDish {
+  margin: 0.8vw 0 0.4vw 0;
+  font-size: 2.5vw;
+  font-weight: bold;
+  color: black;
+}
+
+.resultActions {
+  display: flex;
+  gap: 0.8vw;
+  margin-top: 0.4vw;
+}
+
+.resultDecline,
+.resultAccept {
+  padding: 0.5vw 1.8vw;
+  font: inherit;
+  font-size: 0.8vw;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.resultDecline {
+  font-weight: bold;
+  color: black;
+  background: white;
+  border: 0.08vw solid #ccc;
+  border-radius: 1vw;
+}
+
+.resultAccept {
+  font-weight: bold;
+  color: white;
+  background: black;
+  border-radius: 1vw;
+}
+
+.resultAccept:hover,
+.resultDecline:hover {
+  transform: scale(1.1);
+}
+
+/* Used specifically for the delete confirmation text */
+.deleteModal .resultDish {
+  font-size: 1vw;
+  line-height: 1.4;
+  text-align: center;
+}
+
