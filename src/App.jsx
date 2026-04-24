@@ -236,6 +236,8 @@ export default function App() {
     then opens that card.
   */
   const handleSelectCard = (position, id) => {
+    if (isSpinningState) return;
+
     const angle = (position - 1) * (360 / quantity);
 
     setRotation(-angle);
@@ -459,18 +461,7 @@ export default function App() {
     let animationFrameId;
 
     const animate = () => {
-      setRotation((prev) => {
-        const next = prev + velocity.current + AUTO_SPIN_SPEED;
-
-        // Gradually reduce drag momentum over time.
-        velocity.current *= 0.95;
-        if (Math.abs(velocity.current) < 0.001) {
-          velocity.current = 0;
-        }
-
-        return next;
-      });
-
+      setRotation((prev) => prev + AUTO_SPIN_SPEED);
       animationFrameId = requestAnimationFrame(animate);
     };
 
@@ -484,9 +475,7 @@ export default function App() {
     isHelpOpen,
     isSpinningState,
     result,
-    velocity,
   ]);
-
   /* ==================================================
      Render
      ================================================== */
