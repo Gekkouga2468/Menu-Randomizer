@@ -37,10 +37,10 @@ export default function useCarouselDrag({
       didDrag.current = true;
     }
 
-    const dragRotation = deltaX * 0.05;
+    const dragRotation = deltaX * 5;
     setRotation((prev) => prev + dragRotation);
 
-    velocity.current = (deltaX / deltaTime) * 0.8;
+    velocity.current = (deltaX / deltaTime) * 10;
 
     lastX.current = currentX;
     lastTime.current = currentTime;
